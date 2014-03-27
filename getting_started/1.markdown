@@ -1,6 +1,6 @@
 ---
 layout: getting_started
-title: 1 Interactive Elixir
+title: 1 Elixirをインタラクティブに動かす - Interactive Elixir
 guide: 1
 ---
 
@@ -8,33 +8,71 @@ guide: 1
 
   <div class="toc"></div>
 
+ようこそ！
+
 Welcome!
+
+Elixirをどうやって始めたらよいかをこのチュートリアルでお伝えしようと思います．この章ではインストールとIExと呼ばれているElixirのインタラクティブシェルの使いかたについて説明します．
 
 In this tutorial we are going to show you how to get started with Elixir. This chapter will cover installation and how to get started with the Interactive Elixir shell called IEx.
 
+もしこのサイトで何かおかしなところを見つけたら，[ぜひバグレポートを書いたりプルリクエストを送ってください](https://github.com/elixir-lang/elixir-lang.github.com)．もし言語のバグのようだとお考えなら[言語の課題管理システムへお知らせください](https://github.com/elixir-lang/elixir/issues)．
+
 If you find any errors in the tutorial or on the website, [please report a bug or send a pull request to our issue tracker](https://github.com/elixir-lang/elixir-lang.github.com). If you suspect it is a language bug, [please let us know in the language issue tracker](https://github.com/elixir-lang/elixir/issues).
+
+それでは始めましょう！
 
 Let's get started!
 
-## 1.1 Installing Erlang
+## 1.1 Erlangのインストール - Installing Erlang
+
+Elixirを動かすために唯一必要なのはErlang(バージョン17.0かそれ以降)で，[コンパイル済パッケージ](https://www.erlang-solutions.com/downloads/download-erlang-otp)を使うと簡単にインストールできます．もしソースコードから直接インストールしたい場合，[Erlangのサイト](http://www.erlang.org/download.html)をみるとわかりますし，[Riakのドキュメント](http://docs.basho.com/riak/1.3.0/tutorials/installation/Installing-Erlang/)にも素晴しいチュートリアルがあります．
 
 The only prerequisite for Elixir is Erlang, version 17.0 or later, which can be easily installed with [Precompiled packages](https://www.erlang-solutions.com/downloads/download-erlang-otp). In case you want to install it directly from source, it can be found on [the Erlang website](http://www.erlang.org/download.html) or by following the excellent tutorial available in the [Riak documentation](http://docs.basho.com/riak/1.3.0/tutorials/installation/Installing-Erlang/).
 
+Windowsの開発者の方にはコンパイル済パッケージをお勧めしています．UNIXプラットフォームの場合は様々なパッケージ管理ツールからErlangをインストールできると思いますので普段お使いのものをご利用ください．
+
 For Windows developers, we recommend the precompiled packages. Those on a UNIX platform can probably get Erlang installed via one of the many package management tools.
 
+> 注: 様々なパッケージ管理ツールでErlangを提供していますが，Elixirを利用するにはつい最近リリースされたErlang 17が必要です．Erlangをインストールする際にご注意ください．
+
 > Note: Although many package management tools provide Erlang, Elixir requires Erlang 17 which has been released just recently. So have that in mind before picking your Erlang installation.
+
+Erlangをインストールした後，コマンドライン(コマンドプロンプト)を開いて`erl`と打ち，Erlangのバージョンを調べましょう．次のような情報を見られると思います:
 
 After Erlang is installed, you should be able to open up the command line (or command prompt) and check the Erlang version by typing `erl`. You will see some information as follows:
 
     Erlang/OTP 17 (erts-6) [64-bit] [smp:2:2] [async-threads:0] [hipe] [kernel-poll:false]
 
+Erlangをどうやってインストールしたかによりますが，ErlangのバイナリへPATHが通っていないかもしれません．必ず[PATH](http://en.wikipedia.org/wiki/Environment_variable)へErlangのバイナリを含めておいてください，そうしないとElixirが動きません！
+
 Notice that depending on how you installed Erlang, Erlang binaries won't be available in your PATH. Be sure to have Erlang binaries in your [PATH](http://en.wikipedia.org/wiki/Environment_variable), otherwise Elixir won't work!
+
+Erlangが起動し動作したなら，Elixirをインストールしましょう．ディストリビューションによりコンパイル済パッケージから入手したり，ソースからコンパイルしたりできます．
 
 After Erlang is up and running, it is time to install Elixir. You can do that via Distributions, Precompiled package or Compiling from Source.
 
-## 1.2 Distributions
+## 1.2 ディストリビューション - Distributions
+
+このチュートリアルではElixir v0.13かそれ以降が必要で，いくつかのディストリビューションでは既に用意されています:
 
 This tutorial requires Elixir v0.14 or later and it may be available in some distributions:
+
+* Mac OS XのHomebrew
+  * `brew update`と打ちhomebrewを最新版へアップデートします
+  * `brew install elixir`でElixirをインストールします
+* Fedora 17+ や Fedora Rawhide
+  * `sudo yum -y install elixir`
+* Arch Linux (on AUR)
+  * `yaourt -S elixir`
+* openSUSE (and SLES 11 SP3+)
+  * `zypper ar -f obs://devel:languages:erlang/ erlang`でErlang開発リポジトリを追加します
+  * `zypper in elixir`でElixirをインストールします
+* Gentoo
+  * `emerge --ask dev-lang/elixir`
+* WindowsのChocolatey
+  * `cinst elixir`
+
 
 * Homebrew for Mac OS X
   * Update your homebrew to latest with `brew update`
@@ -51,17 +89,25 @@ This tutorial requires Elixir v0.14 or later and it may be available in some dis
 * Chocolatey for Windows
   * `cinst elixir`
 
+もし上記のどのディストリビューションをお使いでなくてもご心配なく．コンパイル済パッケージも用意してあります！
+
 If you don't use any of the distributions above, don't worry, we also provide a precompiled package!
 
-## 1.3 Precompiled package
+## 1.3 コンパイル済パッケージ - Precompiled package
+
+Elixirは[リリース毎にコンパイル済パッケージ](https://github.com/elixir-lang/elixir/releases/)を提供しています．パッケージをダウンロードして解凍すると`bin`ディレクトリの中にある`elixir`や`iex`がすぐに実行できます．簡単に開発をするために，環境変数PATHへElixirの`bin`へのパスを追加しておくことをお勧めします．
 
 Elixir provides a [precompiled package for every release](https://github.com/elixir-lang/elixir/releases/). After downloading and unzip-ing the package, you are ready to run the `elixir` and `iex` commands from the `bin` directory. It is recommended that you also add Elixir's `bin` path to your PATH environment variable to ease development.
 
-## 1.4 Compiling from source (Unix and MinGW)
+## 1.4 ソースからコンパイルする(UnixやMinGWの場合) - Compiling from source (Unix and MinGW)
+
+ちょっとした手順でElixirをダウンロードしてコンパイルすることができます．[最終安定版をここ](https://github.com/elixir-lang/elixir/releases/)から手にいれて解凍し，解凍したディレクトリの中で`make`を実行します．すると`bin`ディレクトリの中にある`elixir`や`iex`がすぐに実行できます．簡単に開発をするために，環境変数PATHへElixirの`bin`へのパスを追加しておくことをお勧めします:
 
 You can download and compile Elixir in few steps. You can get the [latest stable release here](https://github.com/elixir-lang/elixir/releases/), unpack it and then run `make` inside the unpacked directory. After that, you are ready to run the `elixir` and `iex` commands from the `bin` directory. It is recommended that you add Elixir's `bin` path to your PATH environment variable to ease development:
 
     $ export PATH="$PATH:/path/to/elixir/bin"
+
+もうちょっと刺激が欲しければ，masterからコンパイルすることもできます:
 
 In case you are feeling a bit more adventurous, you can also compile from master:
 
@@ -69,11 +115,17 @@ In case you are feeling a bit more adventurous, you can also compile from master
     $ cd elixir
     $ make clean test
 
+テストが通れば使えます．もしそうならなければ気軽に[Githubにある課題管理](https://github.com/elixir-lang/elixir)へ課題を登録してください．
+
 If the tests pass, you are ready to go. Otherwise, feel free to open an issue [in the issues tracker on Github](https://github.com/elixir-lang/elixir).
 
-## 1.5 Interactive mode
+## 1.5 インタラクティブモード - Interactive mode
+
+エリクサーをインストールすると`iex`，`elixir`そして`elixirc`の3つのコマンドが実行できるようになります．ソースからコンパイルしたか，コンパイル済パッケージをお使いの場合，3つのコマンドは`bin`ディレクトリの中にあります．
 
 When you install Elixir, you will have three new executables: `iex`, `elixir` and `elixirc`. If you compiled Elixir from source or are using a packaged version, you can find these inside the `bin` directory.
+
+それでは，"Interactive Elixir"略して`iex`を起動してみましょう．インタラクティブモードではElixirの式を入力でき，すぐに結果を見ることができます．試しにいくつか式を入力してみましょう:
 
 For now, let's start by running `iex` which stands for Interactive Elixir. In interactive mode, we can type any Elixir expression and get its result straight away. Let's warm up with some basic expressions:
 
@@ -85,5 +137,7 @@ iex> 40 + 2
 iex> "hello" <> " world"
 "hello world"
 ```
+
+もう何でもできそうですね！次の章では言語構造や基本的な型に慣れるためにインタラクティブシェルを沢山使います．次の章に進みましょう．
 
 It seems we are ready to go! We will use the interactive shell quite a lot in the next chapters to get a bit more familiar with the language constructs and basic types, starting in the next chapter.
