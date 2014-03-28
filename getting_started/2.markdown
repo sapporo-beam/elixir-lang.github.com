@@ -1,12 +1,14 @@
 ---
 layout: getting_started
-title: 2 Basic types
+title: 2 基本的な型 - Basic types
 guide: 2
 ---
 
 # {{ page.title }}
 
   <div class="toc"></div>
+
+この章ではElixirの基本的な型: integers, floats, atoms, lists と strings について学びます．いくつかの基本的な型は:
 
 In this chapter we will learn more about Elixir basic types: integers, floats, atoms, lists and strings. Some basic types are:
 
@@ -20,7 +22,9 @@ iex> [1, 2, 3]  # list
 iex> {1, 2, 3}  # tuple
 ```
 
-## 2.1 Basic arithmetic
+## 2.1 基本的な数値 - Basic arithmetic
+
+`iex`を開いて以下の式を入力しましょう:
 
 Open up `iex`  and type the following expressions:
 
@@ -33,6 +37,8 @@ iex> 10 / 2
 5.0
 ```
 
+`10 / 2`が整数`5`ではなく浮動小数点`5.0`を返すことに注意してください．これは期待通りの動作です．エリクサーでは`/`演算子は常に浮動小数点を返します．もし整数の商や余りが必要なら関数`div`や`rem`を呼べばできます:
+
 Notice that `10 / 2` returned a float `5.0` instead of an integer `5`. This is expected. In Elixir, the operator `/` always returns a float. If you want to do integer division or get the division remainder, you can invoke the `div` and `rem` functions:
 
 ```iex
@@ -44,7 +50,11 @@ iex> rem 10, 3
 1
 ```
 
+関数を呼び出すのに括弧は必須ではないことに注意してください．
+
 Notice that parentheses are not required in order to invoke a function.
+
+Elixirは2進数，8進数，16進数の入力もできます:
 
 Elixir also supports shortcut notations for entering binary, octal and hexadecimal numbers:
 
@@ -57,6 +67,8 @@ iex> 0x1F
 31
 ```
 
+浮動小数点は1つ以上の数字のあとに点が必要で，指数として`e`を使うこともできます:
+
 Float numbers require a dot followed by at least one digit and also support `e` for the exponent number:
 
 ```iex
@@ -66,9 +78,13 @@ iex> 1.0e-10
 1.0e-10
 ```
 
+Elixirの浮動小数点は64ビットの倍精度です．
+
 Floats in Elixir are 64 bit double precision.
 
-## 2.2 Booleans
+## 2.2 真理値 - Booleans
+
+Elixirでは真理値として`true`と`false`を使えます．
 
 Elixir supports `true` and `false` as booleans.
 
@@ -79,7 +95,11 @@ iex> true == false
 false
 ```
 
+Elixirは変数の型を調べて真理値を返す関数群を提供しています．例えば，関数`is_boolean/1`では変数がbooleanかどうか調べることができます:
+
 Elixir provides a bunch of predicate functions to check for a value type. For example, the `is_boolean/1` function can be used to check if a value is a boolean or not:
+
+> 注: Elixirの中の関数は名前と引数の数(つまり項数)で表されます．つまり`is_boolean/1`は`is_boolean`という名前で引数を1つ取る特定の関数を示します．`is_boolean/2`は同じ名前ですが項数が異なるため，別の(存在しない)関数を表します．
 
 > Note: Functions in Elixir are identified by name and by number of arguments (i.e. arity). Therefore, `is_boolean/1` identifies a function named `is_boolean` that takes 1 argument. `is_boolean/2` identifies a different (nonexistent) function with the same name but different arity.
 
@@ -90,11 +110,17 @@ iex> is_boolean(1)
 false
 ```
 
+もし引数が整数，浮動小数点あるいはそのどちらかであることを調べたいなら，それぞれ`is_integer/1`，`is_float/1`か`is_number/1`を使うことができます．
+
 You can also use `is_integer/1`, `is_float/1` or `is_number/1` to check, respectively, if an argument is an integer, a float or either.
+
+> メモ: シェルの中で`h`を押すといつでもシェルの使い方を表示できます．`h`は全ての関数のドキュメントへアクセスするのにも使えます．例えば`h is_integer/1`と打つと関数`is_integer/1`のドキュメントが表示できます．演算子や他の構成物でも同じように使えます．`h ==/2`を試してみてください．
 
 > Note: at any moment you can type `h` in the shell to print information on how to use the shell. The `h` helper can also be used to access documentation for any function. For example, typing `h is_integer/1` is going to print the documentation for the `is_integer/1` function. It also works with operators and other constructs (try `h ==/2`).
 
-## 2.3 Atoms
+## 2.3 アトム - Atoms
+
+アトムは名前が自身の値を表わしている定数です．別のいくつかの言語ではこれをシンボルと呼んでいます．
 
 Atoms are constants where their name is their own value. Some other languages call these symbols.
 
@@ -105,6 +131,8 @@ iex> :hello == :world
 false
 ```
 
+真理値`true`と`false`は実はアトムです:
+
 The booleans `true` and `false` are, in fact, atoms:
 
 ```iex
@@ -114,7 +142,9 @@ iex> is_atom(false)
 true
 ```
 
-## 2.4 Strings
+## 2.4 文字列 - Strings
+
+Elixirの文字列は二重引用符の中に書き，UTF-8でエンコードされます:
 
 Strings in Elixir are inserted in between double quotes, and they are encoded in UTF-8:
 
@@ -123,12 +153,16 @@ iex> "hellö"
 "hellö"
 ```
 
+Elixirでは文字補完も使えます:
+
 Elixir also supports string interpolation:
 
 ```iex
 iex> "hellö #{:world}"
 "hellö world"
 ```
+
+文字列はエスケープシーケンスを使って改行コードを保持することもできます:
 
 Strings can have line breaks in them or introduce them using escape sequences:
 
@@ -140,6 +174,8 @@ iex> "hello\nworld"
 "hello\nworld"
 ```
 
+`IO`モジュールの関数`IO.puts/1`を使うことで文字列を表示することができます:
+
 You can print a string using the `IO.puts/1` function from the `IO` module:
 
 ```iex
@@ -149,7 +185,11 @@ world
 :ok
 ```
 
+関数`IO.puts/1`が表示のあとにアトム`:ok`を返していることに注意してください．
+
 Notice the `IO.puts/1` function returns the atom `:ok` as result after printing.
+
+文字列はElixir内部ではバイト列(バイナリ)で表現されています:
 
 Strings in Elixir are represented internally by binaries which are sequences of bytes:
 
@@ -158,12 +198,16 @@ iex> is_binary("hellö")
 true
 ```
 
+文字列のバイト数を得ることもできます:
+
 We can also get the number of bytes in a string:
 
 ```iex
 iex> byte_size("hellö")
 6
 ```
+
+この文字列は5文字であるにもかわらず，バイト数は6であることに注意してください．これは文字"ö"がUTF-8では2バイトを占めるためです．正確な文字の長さを取得するには関数`String.length/1`を使えます:
 
 Notice the number of bytes in that string is 6, even though it has 5 characters. That's because the character "ö" takes 2 bytes to be represented in UTF-8. We can get the actual length of the string, based on the number of characters, by using the `String.length/1` function:
 
@@ -172,12 +216,16 @@ iex> String.length("hellö")
 5
 ```
 
+[Stringモジュール](/docs/stable/elixir/String.html)はユニコード標準で定義された文字を操作する関数たちを含んでいます:
+
 The [String module](/docs/stable/elixir/String.html) contains a bunch of functions that operate on strings as defined in the Unicode standard:
 
 ```iex
 iex> String.upcase("hellö")
 "HELLÖ"
 ```
+
+Elxirでは`単一引用符でくくられた`文字列と`二重引用符でくくられた`文字列が同じではなく，異なる型で表現されることに気をつけてください:
 
 Keep in mind `single-quoted` and `double-quoted` strings are not equivalent in Elixir as they are represented by different types:
 
@@ -186,9 +234,13 @@ iex> 'hellö' == "hellö"
 false
 ```
 
+ユニコードのサポートや単一引用符と二重引用符でくくられた文字列の違いについては"バイナリ，文字列と文字のリスト"の章でもっと詳しくやります．
+
 We will talk more about Unicode support and the difference between single and double-quoted strings in the "Binaries, strings and char lists" chapter.
 
-## 2.5 Anonymous functions
+## 2.5 匿名関数 - Anonymous functions
+
+関数はキーワード`fn`と`end`で区切られます:
 
 Functions are delimited by the keywords `fn` and `end`:
 
@@ -205,9 +257,15 @@ iex> add.(1, 2)
 3
 ```
 
+Elixirでは関数は"第一級市民"です．つまり，整数や文字列と同じように他の関数の引数へ渡せます．例えば，関数`add`を引数として`is_function/1`へ渡すと確かに`true`が返ってきます．`is_function/2`では関数の項数もチェックすることができます．
+
 Functions are "first class citizens" in Elixir meaning they can be passed as arguments to other functions just as integers and strings can. In the example, we have passed the function in the variable `add` to the `is_function/1` function which correctly returned `true`. We can also check the arity of the function by calling `is_function/2`.
 
+匿名関数を実行するには変数と括弧のあいだに点(`.`)が必要であることにも注目してください．
+
 Note a dot (`.`) in between the variable and parenthesis is required to invoke an anonymous function.
+
+匿名関数はクロージャです，つまり関数が定義されているスコープで保持している変数へアクセスすることができます:
 
 Anonymous functions are closures, and as such they can access variables that are in scope when the function is defined:
 
@@ -217,6 +275,8 @@ iex> add_two = fn a -> add.(a, 2) end
 iex> add_two.(2)
 4
 ```
+
+関数の中で割り当てられた変数はその外側の環境に何の影響も及ぼさないことを覚えておいてください:
 
 Keep in mind that a variable assigned inside a function does not affect its surrounding environment:
 
@@ -229,7 +289,9 @@ iex> x
 42
 ```
 
-## 2.6 (Linked) Lists
+## 2.6 (連結した)リスト - (Linked) Lists
+
+Elixirでは角括弧を値のリストを表すのに使います．値にはどんな型も入れられます:
 
 Elixir uses square brackets to specify a list of values. Values can be of any type:
 
@@ -240,6 +302,8 @@ iex> length [1, 2, 3]
 3
 ```
 
+2つのリストは`++/2`や`--/2`演算子を使うことで繋げたり差し引いたりできます:
+
 Two lists can be concatenated and subtracted using the `++/2` and `--/2` operators:
 
 ```iex
@@ -248,6 +312,8 @@ iex> [1, 2, 3] ++ [4, 5, 6]
 iex> [1, true, 2, false, 3, true] -- [true, false]
 [1, 2, 3, true]
 ```
+
+チュートリアルの様々な場所でリストのheadとtailについて沢山話します．headはリストの最初の要素のことで，tailはリストの残りのことです．それらは`hd/1`と`tl/1`で取得することができます．リストを変数へ割り当てて，そのリストのheadとtailを取得してみましょう:
 
 Throughout the tutorial, we will talk a lot about the head and tail of a list. The head is the first element of a list and the tail is the remainder of a list. They can be retrieved with the functions `hd/1` and `tl/1`. Let's assign a list to a variable and retrieve its head and tail:
 
@@ -259,6 +325,8 @@ iex> tl(list)
 [2, 3]
 ```
 
+空リストからheadやtailを取得しようとするとエラーになります:
+
 Getting the head or the tail of an empty list is an error:
 
 ```iex
@@ -266,9 +334,13 @@ iex> hd []
 ** (ArgumentError) argument error
 ```
 
+おおっと！
+
 Oops!
 
-## 2.7 Tuples
+## 2.7 タプル - Tuples
+
+エリクサーはタプルを定義するのに中括弧を使います．リストのように，タプルは値を保持できます:
 
 Elixir uses curly brackets to define tuples. As lists, tuples can hold any value:
 
@@ -278,6 +350,8 @@ iex> {:ok, "hello"}
 iex> tuple_size {:ok, "hello"}
 2
 ```
+
+タプルは要素を連続したメモリ上に保存します．つまりインデックス毎に要素へアクセスしたり，タプルのサイズを入手するのはとても速いです(インデックスは0から始まります):
 
 Tuples store elements contiguously in memory. This means accessing a tuple element per index or getting the tuple size is a fast operation (indexes start from zero):
 
@@ -290,6 +364,8 @@ iex> tuple_size(tuple)
 2
 ```
 
+タプルと`put_elem/3`を使うと指定したインデックスへ要素をセットすることもできます:
+
 It is also possible to set an element at a particular index in a tuple with `put_elem/3`:
 
 ```iex
@@ -301,13 +377,21 @@ iex> tuple
 {:ok, "hello"}
 ```
 
-Notice that `put_elem/3` returned a new tuple. The original tuple stored in the `tuple` variable was not modified because Elixir data types are immutable. By being immutable, Elixir code is easier to reason about as you never need to worry if a particular code is mutating your data structure in place.
+`put_elem/3`は新しいタプルを返すことに注意してください．Elixirのデータ型は変更不可能なため`tuple`という変数名で保持されているオリジナルのタプルは変更されません．変更不可であることにより，特定のコードがデータ構造を変更していないか気を配る必要はまったくなく，その分簡単になっています．
+
+Notice that `putt_elem/3` returned a new tuple. The original tuple stored in the `tuple` variable was not modified because Elixir data types are immutable. By being immutable, Elixir code is easier to reason about as you never need to worry if a particular code is mutating your data structure in place.
+
+変更不可であることで，別のエンティティが同時に1つのデータ構造を変更しようと試みるといった，並行処理するコードでよく問題になるような競合状態のケースを考えなくてすみます．
 
 By being immutable, Elixir also helps eliminate common cases where concurrent code has race conditions because two different entities are trying to change a data structure at the same time.
 
-## 2.8 Lists or tuples?
+## 2.8 リストにするかタプルにするか - Lists or tuples?
+
+リストとタプルはどう違うのでしょうか？
 
 What is the difference between lists and tuples?
+
+リストは連結リストとしてメモリ上に記録されています．つまりリストの中のある要素はリストの次の要素の場所を示しており，次の要素はまた次の要素というように，リストの終わりがくるまで次の要素を取得していきます．こういったリストの中のそれぞれのペアのことを**コンスセル**と呼びます:
 
 Lists are stored in memory as linked lists. This means each element in a list points to the next element, and then to the next element, until it reaches the end of a list. We call each of those pairs in a list a **cons cell**:
 
@@ -315,6 +399,8 @@ Lists are stored in memory as linked lists. This means each element in a list po
 iex> list = [1|[2|[3|[]]]]
 [1, 2, 3]
 ```
+
+つまりリストの長さにアクセスするのは直線的な操作だということです: サイズを知るにはリスト中の全ての要素を順番にたどっていかなくてはなりません．リストの手前に要素を追加する場合にのみリストを素早くアップデートできます:
 
 This means accessing the length of a list is a linear operation: we need to traverse the whole list in order to figure out its size. Updating a list is fast as long as we are prepending elements:
 
@@ -325,9 +411,15 @@ iex> list ++ [4]
 [1, 2, 3, 4]
 ```
 
+一番目の操作は，次の要素が`list`であるような新しいコンスを単に追加するだけなので速いです．二番目の操作はリスト全体を再構築して最後に新しい要素を追加しなくてはならないため遅いです．
+
 The first operation is fast because we are simply adding a new cons that points to the remaining of `list`. The second one is slow because we need to rebuild the whole list and add a new element to the end.
 
+一方，タプルは連続したメモリ上に記録されています．つまりタプルのサイズを知ったりインデックスを指定して要素にアクセスすることは速いです．しかし要素を更新したり追加するのはタプル全体をコピーしてから行う必要があるため大変です．
+
 Tuples, on the other hand, are stored contiguously in memory. This means getting the tuple size or accessing an element by index is fast. However, updating or adding elements to tuples is expensive because it requires copying the whole tuple in memory.
+
+これらの性能の特徴がデータ構造の使い方に影響します．タプルのごく一般的な使い方の一つとして関数からの返り値に情報を付与するということがあります．例えば関数`File.read/1`をみてみましょう:
 
 Those performance characteristics dictate the usage of those data structures. One very common use case for tuples is to use them to return extra information from a function. For example, `File.read/1` is a function that can be used to read file contents and it returns tuples:
 
@@ -338,7 +430,11 @@ iex> File.read("path/to/unknown/file")
 {:error, :enoent}
 ```
 
+もし`File.read/1`に与えられたパスが存在すれば，タプルの1番目の要素はアトム`:ok`となり，2番目の要素に内容が入って返ってきます．そうでなければ，タプルで`:error`とエラーの理由が返ります．
+
 If the path given to `File.read/1` exists, it returns a tuple with the atom `:ok` as first element and the file contents as second. Otherwise, it returns a tuple with `:error` and the error reason.
+
+だいたいの場合Elixirはあなたへ正しい方法をとらせようとします．例えばタプルの要素にアクセスする関数`elem/2`はありますが，同じような関数はリストには用意されていません:
 
 Most of the time, Elixir is going to guide you to do the right thing. For example, there is a `elem/2` function to access a tuple item but there is no built-in equivalent for lists:
 
@@ -349,8 +445,14 @@ iex> elem(tuple, 1)
 "hello"
 ```
 
+データ構造が持っている要素数を数える場合，Elixirは単純な規則: 操作が一定時間になる(つまり値があらかじめ計算されている)ものを関数名`size`と呼び，明示的に計算が必要なものは関数名`length`と呼ぶという規則に従います．
+
 When "counting" the number of elements in a data structure, Elixir also abides by a simple rule: the function should be named `size` if the operation is in constant time (i.e. the value is pre-calculated) or `length` if the operation requires explicit counting.
 
+例えば，今まで数を数える関数を4つ使ってきました:`byte_size/1`(文字列のバイト数)，`tuple_size/1`(タプルのサイズ)，`length/1`(リストの長さ)そして`String.length/1`(文字列の文字数)．そこでも，`byte_size`は文字列のバイトサイズを求めるという軽い処理であったのに対し，ユニコード文字の数を調べる`String.length`は文字列全体への繰り返し処理が必要でした．
+
 For example, we have used 4 counting functions so far: `byte_size/1` (for the number of bytes in a string), `tuple_size/1` (for the tuple size), `length/1` (for the list length) and `String.length/1` (for the number of characters in a string). That said, we use `byte_size` to get the number of bytes in a string, which is cheap, but retrieving the number of unicode characters uses `String.length`, since the whole string needs to be iterated.
+
+Elixirにはデータ型として他にも`Port`，`Reference`や`PID`といったものがあります(よくプロセス間通信で使います)，これらはプロセスについて話すときにさっと見ることにします．今は，型を操作する基本的ないくつかの演算子を見ていくことにしましょう．
 
 Elixir also provides `Port`, `Reference` and `PID` as data types (usually used in process communication), and we will take a quick look at them when talking about processes. For now, let's take a look at some of the basic operators that go with our basic types.
