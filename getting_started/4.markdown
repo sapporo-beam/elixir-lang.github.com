@@ -1,6 +1,6 @@
 ---
 layout: getting_started
-title: 4 Pattern matching
+title: 4 パターンマッチング - Pattern matching
 guide: 4
 ---
 
@@ -8,9 +8,13 @@ guide: 4
 
   <div class="toc"></div>
 
+この章では，Elixirにおいて`=`演算子は実際にはマッチ演算子であり，データ構造へのパターンマッチをどのように使うかを見ていきます．最後に，既に束縛された値へアクセスする際に使用するピン演算子`^`について学びます．
+
 In this chapter, we will show how the `=` operator in Elixir is actually a match operator and how to use it to pattern match inside data structures. Finally, we will learn about the pin operator `^` used to access previously bound values.
 
-## 4.1 The match operator
+## 4.1 マッチ演算子 - The match operator
+
+Elixirで変数へ割り当てるために`=`を何回か使ってきました．
 
 We have used the `=` operator a couple times to assign variables in Elixir.
 
@@ -21,6 +25,8 @@ iex> x
 1
 ```
 
+Elixirにおいて`=`演算子は*マッチ演算子*と呼ばれています．なぜだか見てみましょう:
+
 In Elixir, the `=` operator is actually called *the match operator*. Let's see why:
 
 ```iex
@@ -30,7 +36,12 @@ iex> 2 = x
 ** (MatchError) no match of right hand side value: 1
 ```
 
+`1 = x`が式として妥当であることに注意してください，そして左側も右側も両方同じ(1である)ためマッチします．両側がマッチしなかった場合，`MatchError`が発生します．
+
 Notice that `1 = x` is a valid expression, and it matched because both the left and right side are equal to 1. When the sides do not match, a `MatchError` is raised.
+
+
+変数は`=`の左側にあるときにだけ割り当てられます:
 
 A variable can only be assigned on the left side of `=`:
 
@@ -39,9 +50,13 @@ iex> 1 = unknown
 ** (RuntimeError) undefined function: unknown/0
 ````
 
+`unknown`という変数はまだ定義されていないため，Elixirはあなたが`unknown/0`という名前の関数を呼び出そうとしていると考えます，しかしそういった関数はありません．
+
 Since there is no variable `unknown` previously defined, Elixir imagined you were trying to call a function named `unknown/0`, but there isn't such function.
 
-## 4.2 Pattern matching
+## 4.2 パターンマッチング - Pattern matching
+
+マッチ演算子は単純な値に対してのみ使えるわけではなく，複雑なデータ型を分解するのにも使えます．例えば，タプルにパターンマッチさせることができます:
 
 The match operator is not only used to match against simple values, but it is also useful for destructuring more complex data types. For example, we can pattern match on tuples:
 
@@ -54,6 +69,8 @@ iex> b
 "world"
 ```
 
+パターンマッチは両側が対応していないとエラーになります．例えばタプルのサイズが異なる場合:
+
 A pattern match will error in case the sides can't match. This is, for example, the case when the tuples have different sizes:
 
 ```iex
@@ -61,12 +78,16 @@ iex> {a, b, c} = {:hello, "world"}
 ** (MatchError) no match of right hand side value: {:hello, "world"}
 ```
 
+そして異なる型を比較した場合:
+
 And also when comparing different types:
 
 ```iex
 iex> {a, b, c} = [:hello, "world", "!"]
 ** (MatchError) no match of right hand side value: [:hello, "world", "!"]
 ```
+
+興味深いことに，特定の値へマッチさせることができます．以下の例では右側にあるタプルの最初の要素がアトム`:ok`から始まっている場合にのみ左側とマッチすることになります:
 
 More interestingly, we can match on specific values. The example below asserts that the left side will only match the right side when the right side is a tuple that starts with the atom `:ok`:
 
@@ -80,6 +101,8 @@ iex> {:ok, result} = {:error, :oops}
 ** (MatchError) no match of right hand side value: {:error, :oops}
 ```
 
+リストにもパターンマッチさせられます:
+
 We can pattern match on lists:
 
 ```iex
@@ -88,6 +111,8 @@ iex> [a, b, c] = [1, 2, 3]
 iex> a
 1
 ```
+
+リストではheadとtailというマッチングもできます:
 
 A list also supports matching on its own head and tail:
 
@@ -100,12 +125,16 @@ iex> tail
 [2, 3]
 ```
 
+関数`hd/1`と`tl/1`同じように，headとtailは空リストにマッチさせることができません:
+
 Similar to the `hd/1` and `tl/1` functions, we can't match an empty list with a head and tail pattern:
 
 ```iex
 iex> [h|t] = []
 ** (MatchError) no match of right hand side value: []
 ```
+
+`[head | tail]`形式はパターンマッチングにだけ使えるのではなく，リストの先頭へ要素を追加するのにも使えます:
 
 The `[head | tail]` format is not only used on pattern matching but also for prepending items to a list:
 
@@ -116,9 +145,13 @@ iex> [0|list]
 [0, 1, 2, 3]
 ```
 
+パターンマッチングでタプルやリストなどのデータ構造を簡単に分解できるようになります．今後の章で見ていくように，これはElixirで再帰をする際の基本で，MapやBinaryなどの異なる型へうまく適用できます．
+
 Pattern matching allows developers to easily destructure data types such as tuples and lists. As we will see in following chapters, it is one of the foundations of recursion in Elixir and applies to other types as well, like maps and binaries.
 
-## 4.3 The pin operator
+## 4.3 ピン演算子 - The pin operator
+
+Elixirの変数は再束縛できます:
 
 Variables in Elixir can be rebound:
 
@@ -128,6 +161,8 @@ iex> x = 1
 iex> x = 2
 2
 ```
+
+ピン演算子`^`は変数の再束縛ではなく以前にマッチした値とのマッチングをしたい場合に使われます:
 
 The pin operator `^` can be used when there is no interest in rebinding a variable but rather in matching against its value prior to the match:
 
@@ -142,6 +177,8 @@ iex> x
 2
 ```
 
+パターンの中で複数回使われているときは，全ての参照は同じパターンへ束縛されます:
+
 Notice that if a variable is mentioned more than once in a pattern, all references should bind to the same pattern:
 
 ```iex
@@ -150,6 +187,8 @@ iex> {x, x} = {1, 1}
 iex> {x, x} = {1, 2}
 ** (MatchError) no match of right hand side value: {1, 2}
 ```
+
+パターンの値が何であるか気にしないことがあります．そのときは変数を`_`へ束縛するのが一般的です．例えばリストの先頭(head)にだけ何かする場合，tailをアンダースコアへ割り当てます:
 
 In some cases, you don't care about a particular value in a pattern. It is a common practice to bind those values to the underscore, `_`. For example, if only the head of the list matters to us, we can assign the tail to underscore:
 
@@ -160,6 +199,8 @@ iex> h
 1
 ```
 
+`_`はどこからも読むことができない特別な値です．読もうとすると未束縛のエラーになります:
+
 The variable `_` is special in that it can never be read from. Trying to read from it gives an unbound variable error:
 
 ```iex
@@ -167,11 +208,15 @@ iex> _
 ** (CompileError) iex:1: unbound variable _
 ```
 
+パターンマッチングで強力な構造を構築できますが，使いかたに制限があります．例えば，マッチの左側で関数を呼び出すことはできません．以下の例はうまくいきません:
+
 Although pattern matching allows us to build powerful constructs, its usage is limited. For instance, you cannot make function calls on the left side of a match. The following example is invalid:
 
 ```iex
 iex> length([1,[2],3]) = 3
 ** (ErlangError) erlang error :illegal_pattern
 ```
+
+パターンマッチの導入部分はおしまいです．次の章で見るように，パターンマッチングは言語を組み立てるのに良く出てきます．
 
 This finishes our introduction to pattern matching. As we will see in the next chapter, pattern matching is very common in many language constructs.
