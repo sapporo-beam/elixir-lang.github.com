@@ -1,6 +1,6 @@
 ---
 layout: getting_started
-title: 5 case, cond and if
+title: 5 case，condそしてif - case, cond and if
 guide: 5
 ---
 
@@ -8,9 +8,13 @@ guide: 5
 
   <div class="toc"></div>
 
+この章では`case`，`cond`そして`if`といった処理制御構造について学んでいきます．
+
 In this chapter, we will learn about the `case`, `cond` and `if` control-flow structures.
 
-## 5.1 case
+## 5.1 case - case
+
+`case`によってある値がいずれか一つにマッチするまで複数のパターンと比較することができるようになります:
 
 `case` allows us to compare a value against many patterns until we find a matching one:
 
@@ -25,6 +29,8 @@ iex> case {1, 2, 3} do
 ...> end
 ```
 
+もし既にある値とパターーンマッチさせたい場合，`^`を使わなければなりません:
+
 If you want to pattern match against an existing variable, you need to use the `^` operator:
 
 ```iex
@@ -35,6 +41,8 @@ iex> case 10 do
 ...>   _  -> "Will match"
 ...> end
 ```
+
+句では，ガード(guard)を指定することで条件を拡張することができます:
 
 Clauses also allow extra conditions to be specified via guards:
 
@@ -47,11 +55,57 @@ iex> case {1, 2, 3} do
 ...> end
 ```
 
+最初の句は`x`が正の場合にのみマッチします．
+
 The first clause above will only match when `x` is positive.
 
-## 5.2 Expressions in guard clauses.
+## 5.2 ガード句の中の式 - Expressions in guard clauses.
+
+ErlangVMではガードで使える式に制限があります:
 
 The Erlang VM only allows a limited set of expressions in guards:
+
+* 比較演算子(`==`，`!=`，`===`，`!==`，`>`，`<`，`<=`，`>=`)
+* 論理演算子(`and`，`or`)と否定演算子(`not`，`!`)
+* 算術演算子(`+`，`-`，`*`，`/`)
+* 左側がリテラルの場合の`<>`と`++`
+* `in`演算子
+* 以下の全ての型チェック関数:
+
+    * `is_atom/1`
+    * `is_binary/1`
+    * `is_bitstring/1`
+    * `is_boolean/1`
+    * `is_float/1`
+    * `is_function/1`
+    * `is_function/2`
+    * `is_integer/1`
+    * `is_list/1`
+    * `is_map/1`
+    * `is_number/1`
+    * `is_pid/1`
+    * `is_port/1`
+    * `is_reference/1`
+    * `is_tuple/1`
+
+* それに加えてこれらの関数:
+
+    * `abs(number)`
+    * `bit_size(bitstring)`
+    * `byte_size(bitstring)`
+    * `div(integer, integer)`
+    * `elem(tuple, n)`
+    * `hd(list)`
+    * `length(list)`
+    * `map_size(map)`
+    * `node()`
+    * `node(pid | ref | port)`
+    * `rem(integer, integer)`
+    * `round(number)`
+    * `self()`
+    * `tl(list)`
+    * `trunc(number)`
+    * `tuple_size(tuple)`
 
 * comparison operators (`==`, `!=`, `===`, `!==`, `>`, `<`, `<=`, `>=`)
 * boolean operators (`and`, `or`) and negation operators (`not`, `!`)
@@ -95,6 +149,8 @@ The Erlang VM only allows a limited set of expressions in guards:
     * `trunc(number)`
     * `tuple_size(tuple)`
 
+ガードの中で起きたエラーは単純にガードの失敗とみなされてガードの外には影響しません:
+
 Keep in mind errors in guards do not leak but simply make the guard fail:
 
 ```iex
@@ -108,6 +164,8 @@ iex> case 1 do
 "Got 1"
 ```
 
+もしどの句にもマッチしなければ，エラーが発生します:
+
 If none of the clauses match, an error is raised:
 
 ```iex
@@ -116,6 +174,8 @@ iex> case :ok do
 ...> end
 ** (CaseClauseError) no case clause matching: :ok
 ```
+
+匿名関数でも句やガードを複数持つことができることに注意してください:
 
 Note anonymous functions can also have multiple clauses and guards:
 
@@ -131,9 +191,13 @@ iex> f.(-1, 3)
 -3
 ```
 
+匿名関数の句では引数の数が同じでなければなりません，そうでない場合はエラーになります．
+
 The number of arguments in each anonymous function clause needs to be the same, otherwise an error is raised.
 
-## 5.3 cond
+## 5.3 cond - cond
+
+`case`は異なる値に対して(1つの値を)マッチさせようとするときにはうまく使えます．しかし場合によっては最初に評価した式がtrueになるまで複数の条件をチェックしたい場合があります．そのような場合に`cond`が使えるでしょう:
 
 `case` is useful when you need to match against different values. However, in many circumstances, we want to check different conditions and find the first one that evaluates to true. In such cases, one may use `cond`:
 
@@ -149,7 +213,11 @@ iex> cond do
 "But this will"
 ```
 
+これは命令型言語の`else if`句と同じです(それらより使う機会は少ないですが)．
+
 This is equivalent to `else if` clauses in many imperative languages (although used way less frequently here).
+
+もしtrueになる条件がなければ，エラーになります．そのため，最後の条件に`true`になるものを加えて，常にマッチさせることが必要になるかもしれません:
 
 If none of the conditions return true, an error is raised. For this reason, it may be necessary to add a last condition equal to `true`, which will always match:
 
@@ -164,6 +232,8 @@ iex> cond do
 ...> end
 ```
 
+最後に`cond`では`nil`と`false`以外はどんな値でもtrueとして扱うことに気をつけてください:
+
 Finally, note `cond` considers any value besides `nil` and `false` to be true:
 
 ```iex
@@ -174,7 +244,9 @@ iex> cond do
 "1 is considered as true"
 ```
 
-## 5.4 if and unless
+## 5.4 ifとunless - if and unless
+
+`case`や`cond`とは違い，一つだけ条件をチェックしたい場合に便利な`if/2`や`unless/2`といったマクロも提供しています．
 
 Besides `case` and `cond`, Elixir also provides the macros `if/2` and `unless/2` which are useful when you need to check for just one condition:
 
@@ -189,7 +261,11 @@ iex> unless true do
 nil
 ```
 
+もし`if/2`に渡した条件が`false`か`nil`で返ってきた場合，`do/end`で囲まれた部分は実行されず，単に`nil`が返ります．その逆になるのが`unless/2`です．
+
 If the condition given to `if/2` returns `false` or `nil`, the body given between `do/end` is not executed and it simply returns `nil`. The opposite happens with `unless/2`.
+
+これらでは`else`ブロックも使えます:
 
 They also support `else` blocks:
 
@@ -202,9 +278,13 @@ iex> if nil do
 "This will"
 ```
 
+> メモ: この言語で`if/2`や`unless/2`がマクロとして実装されているのがおもしろい点です;これらは他の様々な言語でそうであるような特別な言語構造ではありません．[モジュール`Kernel`のドキュメント](/docs/stable/elixir/Kernel.html)で`if/2`のドキュメントやソースを調べることができます．モジュール`Kernel`には他にも演算子`+/2`や関数`is_function/2`といったような，あなたがコードを書くときにデフォルトで自動importされて使えるようになっているものが定義されています．
+
 > Note: An interesting note regarding `if/2` and `unless/2` is that they are implemented as macros in the language; they aren't special language constructs as they would be in many languages. You can check the documentation and the source of `if/2` in [the `Kernel` module docs](/docs/stable/elixir/Kernel.html). The `Kernel` module is also where operators like `+/2` and functions like `is_function/2` are defined, all automatically imported and available in your code by default.
 
-## 5.5 `do` blocks
+## 5.5 `do`ブロック - `do` blocks
+
+ここまでで，私たちは4つの制御構造`case`，`cond`，`if`そして`unless`を学びました，そしてこれらは全て`do`/`end`ブロックで囲まれていました．実は`if`を以下のようにも書けます:
 
 At this point, we have learned four control structures: `case`, `cond`, `if` and `unless`, and they were all wrapped in `do`/`end` blocks. It happens we could also write `if` as follows:
 
@@ -212,6 +292,8 @@ At this point, we have learned four control structures: `case`, `cond`, `if` and
 iex> if true, do: 1 + 2
 3
 ```
+
+Elixirでは，`do`/`end`ブロックは式のまとまりを簡単に`do:`へ渡すためのものです．これらは同じことを表しています:
 
 In Elixir, `do`/`end` blocks are a convenience for passing a group of expressions to `do:`. These are equivalent:
 
@@ -228,12 +310,16 @@ iex> if true, do: (
 13
 ```
 
+2番目の構文は**キーワードリスト**を使っていると言っています．`else`も同じ構文で渡せます:
+
 We say the second syntax is using **keyword lists**. We can pass `else` using this syntax:
 
 ```iex
 iex> if false, do: :this, else: :that
 :that
 ```
+
+`do`/`end`ブロックを使う際には小さな，しかし重要な点に気をつけてください: ブロックは常に一番遠くの関数呼び出しに束縛されます．例えば，以下の式
 
 It is important to keep one small detail in mind when using `do`/`end` blocks: they always bind to the farthest function call. For example, the following expression:
 
@@ -243,6 +329,8 @@ iex> is_number if true do
 ...> end
 ```
 
+はこのように解釈されます:
+
 Would be parsed as:
 
 ```iex
@@ -250,6 +338,8 @@ iex> is_number(if true) do
 ...>  1 + 2
 ...> end
 ```
+
+そうするとElixirは`is_number/2`を呼び出そうとして未定義関数エラーになります．あいまいさを解消するのには明示的に括弧を追加すると良いです:
 
 Which leads to an undefined function error as Elixir attempts to invoke `is_number/2`. Adding explicit parentheses is enough to resolve the ambiguity:
 
@@ -259,5 +349,7 @@ iex> is_number(if true do
 ...> end)
 true
 ```
+
+キーワードリストはこの言語においてとても重要な役割を担っており，様々な関数やマクロにおいてあたりまえの存在です．後の章でこのことをもう少し詳しくみていきます．今は"バイナリ，文字列そして文字リスト"について話していきましょう．
 
 Keyword lists play an important role in the language and are quite common in many functions and macros. We will explore them a bit more in a future chapter. Now it is time to talk about "Binaries, strings and char lists".
