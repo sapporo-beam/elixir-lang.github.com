@@ -1,12 +1,14 @@
 ---
 layout: getting_started
-title: 9 Recursion
+title: 9 再帰 - Recursion
 guide: 9
 ---
 
 # {{ page.title }}
 
   <div class="toc"></div>
+
+イミュータブル(不変)という性質を持つため，Elixir(や関数型言語)でのループは従来の手続き型言語とは異なる書き方をします．例えば，手続き型ではこんな感じで書くでしょう:
 
 Due to immutability, loops in Elixir (and in functional programming languages) are written differently from conventional imperative languages. For example, in an imperative language, one would write:
 
@@ -15,6 +17,9 @@ for(i = 0; i < array.length; i++) {
   array[i] = array[i] * 2
 }
 ```
+
+上の例では配列と補助変数`i`を変化させています．Elixirではこうできません．そのかわり関数型言語は再帰に頼ります: 関数は再帰的に呼び出され，停止の条件になるまで，動作し続けます．任意の回数文字を出力する以下の例を考えてみましょう:
+
 
 In the example above, we are mutating the array and the helper variable `i`. That's not possible in Elixir. Instead, functional languages rely on recursion: a function is called recursively until a condition is reached that stops the recursive action from continuing. Consider the example below that prints a string an arbitrary amount of times:
 
@@ -36,17 +41,31 @@ Recursion.print_multiple_times("Hello!", 3)
 # Hello!
 ```
 
+caseと似たように，関数は複数の句を持つことができます．関数へ渡した引数が句のパターンとマッチし，ガードが`true`と評価される，特定の1つの句が実行されます．
+
 Similar to case, a function may have many clauses. A particular clause is executed when the arguments passed to the function match the clause's argument patterns and its guard evaluates to `true`.
+
+上の`print_multiple_times/2`が最初に呼ばれたとき，引数`n`は`3`になっています．
 
 Above when `print_multiple_times/2` is initially called, the argument `n` is equal to `3`.
 
+最初の句は`n`が`1`と同じか小さいときにこの定義を使ってくださいというガードを持っています．そうではないため，Elixirは次の句の定義へと移ります．
+
 The first clause has a guard which says use this definition if and only if `n` is less than or equal to `1`. Since this is not the case, Elixir proceeds to the next clause's definition.
+
+2番目の定義はパターンにマッチし，ガードもありませんので，これが実行されます．最初に`msg`を表示し，次に2番目の引数へ`n-1`(`2`)を渡して自分自身を呼び出します．そうすると`msg`が表示され，再び`print_multiple_times/2`が呼び出されます．このとき2番目の引数は`1`になります．
 
 The second definition matches the pattern and has no guard so it will be executed. It first prints our `msg` and then calls itself passing `n - 1` (`2`) as the second argument. Our `msg` is printed and `print_multiple_times/2` is called again this time with the second argument set to `1`.
 
+`n`が`1`になったことにより，`print_multiple_times/2`にある1番目の定義のガードが真と評価されるので，この定義を実行します．`msg`が表示され，あとは何もすることが残っていません．
+
 Because `n` is now set to `1`, the guard to our first definition of `print_multiple_times/2` evaluates to true, and we execute this particular definition. The `msg` is printed, and there is nothing left to execute.
 
+引数の2番目へどんな数を渡されても，1番目の定義("ベースケース"と呼ばれています)，あるいはベースケースへ確実に1歩近づくような2番目の定義，のどちらかが呼ばれる`print_multiple_times/2`を定義しました．
+
 We defined `print_multiple_times/2` so that no matter what number is passed as the second argument it either triggers our first definition (known as a "base case") or it triggers our second definition which will ensure that we get exactly 1 step closer to our base case.
+
+リストにある数の合計を求めるときに再帰の力をどう使えるか見てみましょう．
 
 Let's now see how we can use the power of recursion to sum a list of numbers.
 
@@ -64,7 +83,11 @@ end
 Math.sum_list([1, 2, 3], 0) #=> 6
 ```
 
+`sum_list`へ引数としてリスト`[1,2,3]`と初期値`0`を渡して呼び出しています．パターンマッチングのルールと一致するものが見つかるまで，それぞれの句へマッチを試みていきます．この場合だとリスト`[1,2,3]`は`[head|tail]`へマッチし，`head = 1`と`tail = [2,3]`，`accumulator`は`0`へと割り当てられます．
+
 We invoke `sum_list` with a list `[1,2,3]` and the initial value `0` as arguments. We will try each clause until we find one that matches according to the pattern matching rules. In this case, the list `[1,2,3]` matches against `[head|tail]` which assigns `head = 1` and `tail = [2,3]` while `accumulator` is set to `0`.
+
+次にリストの先端(head)とアキュムレーターを足し(`head + accumulator`)，リストの残り(tail)を1番目の引数として渡して`sum_list`を再帰的に呼び出します．リストの残りは再び`[head|tail]`へマッチし，リストが空になるまで以下のように続きます:
 
 Then, we add the head of the list to the accumulator `head + accumulator` and call `sum_list` again, recursively, passing the tail of the list as its first argument. The tail will once again match `[head|tail]` until the list is empty, as seen below:
 
@@ -75,9 +98,15 @@ sum_list [3], 3
 sum_list [], 6
 ```
 
+リストが空になると，最後の句にマッチし最終結果の`6`が返ります．
+
 When the list is empty, it will match the final clause which returns the final result of `6`.
 
+このリストをとって一つの値へ"減らしていく(reducing)"という手法は"reduce"アルゴリズムと呼ばれており，関数型プログラミングの中心をなしています．
+
 The process of taking a list and "reducing" it down to one value is known as a "reduce" algorithm and is central to functional programming.
+
+もしリストの全ての値を2倍にしたければ何をすればよいでしょう？
 
 What if we instead want to double all of the values in our list?
 
@@ -95,9 +124,15 @@ end
 Math.double_each([1, 2, 3]) #=> [2, 4, 6]
 ```
 
+リストを再帰的にたどり，全ての要素を2倍にし，新しいリストを返しています．この，リストをとって"写しとる(mapping)"手法は"map"アルゴリズムと呼ばれています．
+
 Here we have used recursion to traverse a list doubling each element and returning a new list. The process of taking a list and "mapping" over it is known as a "map" algorithm.
 
+再帰と末尾呼び出し最適化はElixirの重要な部分で，ループを作るのによく利用されています．しかしElixirでプログラミングしているときにリストの操作に上でやったような再帰を使うことはほとんどないでしょう．
+
 Recursion and tail call optimization are an important part of Elixir and are commonly used to create loops. However, when programming Elixir you will rarely use recursion as above to manipulate lists.
+
+次の章で学ぶ[`Enum`モジュール](/docs/stable/elixir/Enum.html)は既にリストを扱うのに便利な様々なものを提供しています．例えば上の例は次のように書けてしまいます:
 
 The [`Enum` module](/docs/stable/elixir/Enum.html), which we are going to study in the next chapter, already provides many conveniences for working with lists. For instance, the examples above could be written as:
 
@@ -108,6 +143,8 @@ iex> Enum.map([1, 2, 3], fn(x) -> x * 2 end)
 [2, 4, 6]
 ```
 
+あるいはキャプチャー構文を使えばこのように:
+
 Or, using the capture syntax:
 
 ```iex
@@ -116,5 +153,7 @@ iex> Enum.reduce([1, 2, 3], 0, &+/2)
 iex> Enum.map([1, 2, 3], &(&1 * 2))
 [2, 4, 6]
 ```
+
+それではEnumerableとStreamについてもっと詳しくみていきましょう．
 
 So let's take a deeper look at Enumerables and Streams.
