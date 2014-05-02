@@ -1,6 +1,6 @@
 ---
 layout: getting_started
-title: 11 Processes
+title: 11 プロセス - Processes
 guide: 11
 ---
 
@@ -8,13 +8,21 @@ guide: 11
 
   <div class="toc"></div>
 
+Elixirでは全てのコードはプロセスの内部で動きます．プロセス同士は独立，並行して動き，メッセージパッシングでやり取りします．プロセスはElixirにおける並行の基本となるばかりではなく，分散や高可用なプログラムの構築にも役立ちます．
+
 In Elixir, all code runs inside processes. Processes are isolated from each other, run concurrent to one another and communicate via message passing. Processes are not only the basis for concurrency in Elixir, but they also provide the means for building distributed and fault-tolerant programs.
+
+ElixirのプロセスをOSのプロセスと混同してはいけません．プロセスは(他の多くのプログラミング言語におけるスレッドとは異なり)メモリとCPUにとって非常に軽量です．ですから，同時に動作する数千のプロセスを保持することは特別珍しいことではありません．
 
 Elixir's processes should not be confused with operating system processes. Processes in Elixir are extremely lightweight in terms of memory and CPU (unlike threads in many other programming languages). Because of this, it is not uncommon to have dozens of thousands of processes running simultaneously.
 
+この章では，私たちは新しいプロセスを生み出す方法，異なるプロセスのあいだでメッセージをうまく送ったり受けとったりする方法といった基本的な構造を学んでいきます．
+
 In this chapter, we will learn about the basic constructs for spawning new processes, as well as sending and receiving messages between different processes.
 
-## 11.1 spawn
+## 11.1 spawn(生み出す) - spawn
+
+新しいプロセスを生み出すための基本的な方法は，自動インポートされている関数`spawn/1`を使うことです:
 
 The basic mechanism for spawning new processes is with the auto-imported `spawn/1` function:
 
@@ -23,7 +31,11 @@ iex> spawn fn -> 1 + 2 end
 #PID<0.43.0>
 ```
 
+`spawn/1`は，他のプロセスで実行する関数を受けとります．
+
 `spawn/1` takes a function which it will execute in another process.
+
+`spawn/1`はPID(プロセス識別子)を返すことに注意してください．ここで生み出したプロセスはたぶんすぐに死にます．生み出されたプロセスは与えられた関数を実行し，関数が終わったら終了します:
 
 Notice `spawn/1` returns a PID (process identifier). At this point, the process you spawned is very likely dead. The spawned process will execute the given function and exit after the function is done:
 
@@ -34,7 +46,11 @@ iex> Process.alive?(pid)
 false
 ```
 
+> メモ: (手元で試すと)恐らくガイドで書いてあるのとは別のプロセス識別子になるでしょう．
+
 > Note: you will likely get different process identifiers than the ones we are getting in this guide.
+
+`self/0`を呼ぶことで今動いているプロセスのPIDを入手することができます:
 
 We can retrieve the PID of the current process by calling `self/0`:
 
@@ -45,9 +61,13 @@ iex> Process.alive?(self())
 true
 ```
 
+プロセスは私たちがメッセージを送受信できるようになるとさらに面白い存在になります．
+
 Processes get much more interesting when we are able to send and receive messages.
 
-## 11.2 send and receive
+## 11.2 送信と受信 - send and receive
+
+`send/2`を使ってプロセスへメッセージを送り，`receive/1`を使って受けとることができます:
 
 We can send messages to a process with `send/2` and receive them with `receive/1`:
 
@@ -61,7 +81,11 @@ iex> receive do
 "world"
 ```
 
+メッセージがプロセスから送られてくると，メッセージはプロセスのメールボックスへ保存されます．`receive/2`ブロックは与えられたパターンにマッチするいずれかのメッセージを現在のプロセスのメールボックスから探します．`receive/1`は`case/2`のように複数の句を取ることができ，句のガードとしてうまく動作します．
+
 When a message is sent to a process, the message is stored in the process mailbox. The `receive/2` block goes through the current process mailbox searching for a message that matches any of the given patterns. `receive/1` supports many clauses, like `case/2`, as well as guards in the clauses.
+
+もしパターンにマッチするメッセージがメールボックスに無ければ，現在のプロセスはマッチするメッセージがくるまで待ち続けます．タイムアウトを指定することもできます:
 
 If there is no message in the mailbox matching any of the patterns, the current process will wait until a matching message arrives. A timeout can also be specified:
 
@@ -74,7 +98,11 @@ iex> receive do
 "nothing after 1s"
 ```
 
+既にメッセージがメールボックスにあることを期待しているならタイムアウトを0にすることもできます．
+
 A timeout of 0 can be given when you already expect the message to be in the mailbox.
+
+プロセス同士でメッセージを送りあってみましょう:
 
 Let's put all together and send messages in between processes:
 
@@ -89,6 +117,8 @@ iex> receive do
 "Got hello from #PID<0.48.0>"
 ```
 
+シェルから行なう場合，`flush/0`が便利かもしれません．メールボックスにある全てのメッセージを表示し，空にします．
+
 While in the shell, you may find the helper `flush/0` quite useful. It flushes and prints all the messages in the mailbox.
 
 ```iex
@@ -99,7 +129,9 @@ iex> flush()
 :ok
 ```
 
-## 11.3 Links
+## 11.3 リンク - Links
+
+Elixirでspawnするときに一番よく使われているのは`spawn_link/1`を経由するものです．`spawn_link/1`の例を見るまえに，プロセスが失敗したときにどんなことが起こるかを見てみましょう:
 
 The most common form of spawning in Elixir is actually via `spawn_link/1`. Before we show an example with `spawn_link/1`, let's try to see what happens when a process fails:
 
@@ -107,6 +139,8 @@ The most common form of spawning in Elixir is actually via `spawn_link/1`. Befor
 iex> spawn fn -> raise "oops" end
 #PID<0.58.0>
 ```
+
+むむっ……何も起こりません．なぜならプロセス同士は独立しているためです．もし，あるプロセスでの失敗を他のプロセスへ伝播させたければリンクを使うべきです．`spawn_link/1`を使えばできます:
 
 Well... nothing happened. That's because processes are isolated. If we want the failure in one process to propagate to another one, we should link them. This can be done with `spawn_link/1`:
 
@@ -117,6 +151,8 @@ iex> spawn_link fn -> raise "oops" end
     ** (RuntimeError) oops
         :erlang.apply/2
 ```
+
+シェルで失敗した場合，シェルは自動的に失敗を受けとって，読みやすい形で表示してくれます．自分達のコードで実際には何が起きるのかわかりやすいように，`spawn_link/1`をファイルの中で使い，動かしてみます:
 
 When a failure happens in the shell, the shell automatically traps the failure and shows it nicely formatted. In order to understand what would really happen in our code, let's use `spawn_link/1` inside a file and run it:
 
@@ -129,17 +165,27 @@ receive do
 end
 ```
 
+この場合プロセスが失敗し，リンクしているので親プロセスも落ちます．`Process.link/2`を呼べばリンクを手動で行うこともできます．プロセスがどんな機能を提供しているか知るのに[`Process`モジュール](/docs/stable/elixir/Process.html)を眺めることをおすすめします．
+
 This time the process failed and brought the parent process down as they are linked. Linking can also be done manually by calling `Process.link/2`. We recommend you to take a look at [the `Process` module](/docs/stable/elixir/Process.html) for other functionality provided by processes.
+
+プロセスとリンクは可用性の高いシステムを構築するのに大事な役割を担っています．Elixirのアプリケーションではしばしば，プロセスが死んでしまった際に検知し，同じ場所で新しいプロセスを動かすため，私たちが作るプロセスとスーパーバイザー(監視役)をリンクさせます．これができるのはプロセスがデフォルトでは何も共有しないためです．そしてもしプロセスが独立しているなら，プロセス内での失敗が他のプロセスをクラッシュさせたり状態を壊したりすることは絶対ににありません．
 
 Process and links play an important role when building fault-tolerant systems. In Elixir applications, we often link our processes to supervisors which will detect when a process die and start a new process in its place. This is only possible because processes are isolated and don't share anything by default. And if processes are isolated, there is no way a failure in a process will crash or corrupt the state of another.
 
+Process and links play an important role when building fault-tolerant systems. In Elixir applications we often link our processes to supervisors which will detect when a process die and start a new process in its place. This is only possible because processes don't share anything by default so there is no way the crash of a process can corrupt the state of another process!
+
+他の言語では例外は受けとったり操作することが求められますが，Elixirではスーパーバイザーがシステムを再起動してくれるであろうため，プロセスは失敗するがままにしておいてかまいません．"早く失敗する"はElixirでソフトウェアを書く際の一般的な指針です！
+
 While other languages would require us to catch/handle exceptions, in Elixir we are actually fine with letting process fail because we expect supervisors to properly restart our systems. "Failing fast" is a common philosophy when writing Elixir software!
 
-Before moving to the next chapter, let's see one of the most common use case for creating processes in Elixir.
+## 11.4 状態 - State
 
-## 11.4 State
+このガイドでまだ状態について話していませんでした．もし状態が必要なアプリケーション，例えばアプリケーションの設定を保持したり，ファイルを解析してメモリに保持するときに，どこに保存しておけばよいのでしょうか？
 
 We haven't talked about state so far in this guide. If you are building an application that requires state, for example, to keep your application configuration, or you need to parse a file and keep it in memory, where would you store it?
+
+この質問のもっとも一般的な回答としてはプロセスです．私たちは無限ループする，状態を保持するプロセスを書くことができ，メッセージを送ったり受けたりすることができます．例えば，新しいプロセスでキーバリューストアとして動作する，`kv.exs`というファイル名のモジュールを書いてみましょう:
 
 Processes are the most common answer to this question. We can write processes that loops infinitely, keeping a state, and sending and receiving messages. As an example, let's write a module that starts new processes that work as a key-value store in a file named `kv.exs`:
 
@@ -161,7 +207,11 @@ defmodule KV do
 end
 ```
 
+関数`start`は，関数`loop/1`を動かすような新しいプロセスを，最初に空のマップを渡して，単純に産み出していることに注目してください．関数`loop/1`はメッセージを待ち受け，どのメッセージにも適切な動作をします．`:get`メッセージの場合，呼び出し元へメッセージを送り返し，再び`loop/1`を呼び出し，新しいメッセージを待ちます．`:put`メッセージの場合，与えられた`key`と`value`を保存した新しいバージョンのマップで`loop/1`を呼び出します．
+
 Note that the `start` function basically spawns a new process that runs the `loop/1` function, starting with an empty map. The `loop/1` function then waits for messages and perform the appropriate action for each message. In case of a `:get` message, it sends a message back to the caller and calls `loop/1` again, to wait for a new message. While the `:put` message actually makes `loop/1` be invoked with a new version of the map, with the given `key` and `value` stored.
+
+`iex kv.exs`で動かして試してみましょう:
 
 Let's give it a try by running `iex kv.exs`:
 
@@ -174,6 +224,8 @@ iex> flush
 nil
 ```
 
+最初，マップには何もキーがありません，ですから現在のプロセスへ`:get`メッセージを送って，inboxをフラッシュさせても`nil`が返ります．`:put`メッセージを送って再び試してみましょう:
+
 At first, the process map has no keys, so sending a `:get` message and then flushing the current process inbox returns `nil`. Let's send a `:put` message and try it again:
 
 ```iex
@@ -185,7 +237,11 @@ iex> flush
 :world
 ```
 
+どうやってプロセスが状態を保持しているか，そしてメッセージを送ることで取得や更新ができることをご覧ください．実際，`pid`を知っているどんなプロセスにも，上のようにしてメッセージを送ることができ，状態を操作することができます．
+
 Notice how the process is keeping a state and we can get and update this state by sending the process messages. In fact, any process that knows the `pid` above will be able to send it messages and manipulate the state.
+
+名前を与えてpidを登録もでき，そうすると名前を知る全て(のプロセス)がメッセージを送ることができます:
 
 It is also possible to register the pid, giving it a name, and allowing everyone that knows the name to send it messages:
 
@@ -198,6 +254,8 @@ iex> flush
 :world
 ```
 
+Elixirのアプリケーションにおいて，プロセスに状態を持たせ，名前の登録をすることは良くおこなわれています．しかしほとんどの場合，上のように手で実装することはなく，Elixirが提供している抽象物のどれかを使います．例えばElixirは状態を利用する[agents](/docs/stable/elixir/Agent.html)という単純な抽象物を提供しています:
+
 Using process around state and name registering are very common patterns in Elixir applications. However, most of the time, we won't implement those patterns manualy as above, but using one of the many of the abstractions that ships with Elixir. For example, Elixir provides [agents](/docs/stable/elixir/Agent.html) which are simple abstractions around state:
 
 ```iex
@@ -209,6 +267,10 @@ iex> Agent.get(pid, fn map -> Map.get(map, :hello) end)
 :world
 ```
 
+`Agent.start/2`へは`:name`オプションを渡すことができ，その場合は自動的に登録されます．Elixirは(GenServerと呼ばれている)一般的なサーバー，(GenEventと呼ばれる)一般的なイベント管理と一般的なイベント処理，タスクなど，agentと同じようにプロセスによって実現されているAPIを提供しています．スーパーバイザーの連なり(supervision tree)による，起動から終了までを全てElixirアプリケーションで構築するためのもっと詳しい内容はMixとOTPのガイドのところで行います．
+
 A `:name` option could also be given to `Agent.start/2` and it would be automatically registered. Besides agents, Elixir provides an API for building generic servers (called GenServer), generic event managers and event handlers (called GenEvent), tasks and more, all powered by processes underneath. Those, along with supervision trees, will be explored with more detail in the Mix and OTP guide which will build a complete Elixir application from start to finish.
+
+今はElixirのI/Oの世界への探検に向かいましょう．
 
 For now, let's move on and explore the world of I/O in Elixir.
