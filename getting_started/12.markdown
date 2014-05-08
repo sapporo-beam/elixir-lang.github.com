@@ -1,6 +1,6 @@
 ---
 layout: getting_started
-title: 12 IO
+title: 12 入出力 - IO
 guide: 12
 ---
 
@@ -8,11 +8,17 @@ guide: 12
 
   <div class="toc"></div>
 
+この章はElixirの入出力機構，および，[`IO`](/docs/stable/elixr/IO.html)，[`File`](/docs/stable/elxir/File.html)あるいは[`Path`](/docs/stable/elixir/Path.html)などの入出力機構へ関連するモジュールについての紹介をします．
+
 This chapter is a quick introduction to input/output mechanisms in Elixir and related modules, like [`IO`](/docs/stable/elixir/IO.html), [`File`](/docs/stable/elixir/File.html) and [`Path`](/docs/stable/elixir/Path.html).
+
+この章の(入出力の)概要はGetting Startedの前の版にもすでにありました．ですが，入出力システムはElixirとそのVMについていくつかの方針とおもしろさへ光を当てるすばらしい機会を用意していることに気がつきました．
 
 We had originally sketched this chapter to come much earlier in the getting started guide. However, we noticed the IO system provides a great opportunity to shed some light on some philosophies and curiosities of Elixir and the VM.
 
-## 12.1 The IO module
+## 12.1 入出力モジュール - The IO module
+
+Elixirの`IO`モジュールは標準入出力(`:stdio`)，標準エラー(`:stderr`)，ファイル，あるいは他の入出力デバイスを読み書きするための基本となる部分です．モジュールの使い方はこのようになります:
 
 The `IO` module in Elixir is the main mechanism for reading and writing to the standard io (`:stdio`), standard error (`:stderr`), files and other IO devices. Usage of the module is pretty straight-forward:
 
@@ -25,6 +31,8 @@ yes or no? yes
 "yes\n"
 ```
 
+デフォルトでは入出力モジュールの関数は標準入力と標準出力を利用します．引数として`:stderr`を渡すことで標準エラーデバイスへ出力することができます:
+
 By default, the functions in the IO module use the standard input and output. We can pass the `:stderr` as argument to write to the standard error device:
 
 ```iex
@@ -33,7 +41,9 @@ iex> IO.puts :stderr, "hello world"
 :ok
 ```
 
-## 12.2 The File module
+## 12.2 ファイルモジュール - The File module
+
+[`File`](/docs/stable/elixir/File.html)モジュールはファイルを入出力デバイスとして開くことのできる関数を持っています．デフォルトではファイルはバイナリモードで開かれます，必要があれば`IO`モジュールの`IO.binread/2`と`IO.binwrite/2`を使うこともできます:
 
 The [`File`](/docs/stable/elixir/File.html) module contains functions that allows us to open files as IO devices. By default, files are opened in binary mode, which requires developers to use the specific `IO.binread/2` and `IO.binwrite/2` functions from the `IO` module:
 
@@ -48,6 +58,8 @@ iex> File.read "hello"
 {:ok, "world"}
 ```
 
+ファイルを`:utf8`エンコーディングで開くこともでき，(訳注:エンコーディングの指定は)`IO`モジュールの他の関数でも使えます．
+
 A file can also be opened with `:utf8` encoding which allows the remaining functions in the `IO` module to be used:
 
 ```iex
@@ -55,7 +67,11 @@ iex> {:ok, file} = File.open "another", [:write, :utf8]
 {:ok, #PID<0.48.0>}
 ```
 
+一方，ファイルを開いたり，読み書きする関数については，`File`モジュールがファイルシステム上で動く関数をたくさん持っています．例えば`File.rm/1`はファイルを削除するのに使え，`File.mkdir/1`はディレクトリを作り，`File.mkdir_p/1`は必ず親ディレクトリがあるようにディレクトリを(場合によっては複数)作り，`File.cp_r/2`や`File.rm_rf/2`はファイルとディレクトリのコピーと削除を再帰的に行います．
+
 Besides functions for opening, reading and writing files, the `File` module has many functions that work on the file system. Those functions are named after their UNIX equivalents. For example, `File.rm/1` can be used to remove files, `File.mkdir/1` to create directories, `File.mkdir_p/1` creates directories guaranteeing their parents exists and there is even `File.cp_r/2` and `File.rm_rf/2` which copy and remove files and directories recursively.
+
+`File`モジュールの関数には2種類の慣習があることに気づくでしょう，1つは`!`(バンと読みます)つきのもので，もう1つはつかないものです．例えば"hello"というファイルを読むとき，上の例で`!`がつかない方を既に使いましたね．新しい例をいくつか試してみましょう:
 
 You will also notice that functions in the `File` module have two variants, one with `!` (bang) in its name and others without. For example, when we read the "hello" file above, we have used the one without `!`. Let's try some new examples:
 
@@ -70,11 +86,15 @@ iex> File.read! "unknown"
 ** (File.Error) could not read file unknown: no such file or directory
 ```
 
+ファイルが無い場合，`!`がついたバージョンではエラーが発生していますね．つまり`!`のつかないバージョンはパターンマッチングを利用して異なる形式の結果を取り扱おうとするときに選びます．しかし，もしファイルがそこにあること期待しているなら，バンつきの方が例外のエラーメッセージがわかりやすいので便利です．つまり絶対にこう書かないでください:
+
 Notice that when the file does not exist, the version with `!` raises an error. That said, the version without `!` is preferred when you want to handle different outcomes with pattern matching. However, if you expect the file to be there, the bang variation is more useful as it raises a meaningful error message. That said, never write:
 
 ```elixir
 {:ok, body} = File.read(file)
 ```
+
+そのかわりにこう書いてください:
 
 Instead write:
 
@@ -85,13 +105,17 @@ case File.read(file) do
 end
 ```
 
+あるいはこうです
+
 or
 
 ```elixir
 File.read!(file)
 ```
 
-## 12.3 The Path module
+## 12.3 パスモジュール - The Path module
+
+ファイルモジュールの関数の多くは引数としてパスを期待しています．たいていの場合，これらのパスはバイナリであり[`Path`](/docs/stable/elixir/Path.html)モジュールで操作できます:
 
 The majority of the functions in the File module expects paths as arguments. Most commonly, those paths will be binaries and they can be manipulated with the [`Path`](/docs/stable/elixir/Path.html) module:
 
@@ -102,9 +126,13 @@ iex> Path.expand("~/hello")
 "/Users/jose/hello"
 ```
 
+ここまでで，ファイルシステムを使った入出力の主なモジュールについてやりました．次に，なじみの少ない，進んだ入出力の話題について話していきましょう．このセクションはElixirのコードを書く必要がありません，ですから気軽に飛ばしてしまってもよいです，ただ，VMで入出力システムがどのように実装されているかの概要や，その他VMのおもしろい点についてお伝えします．
+
 With this we have covered the main modules for doing IO and interacting with the file system. Next we will discuss some curiosities and advanced topics regarding IO. Those sections are not necessary to write Elixir code, so feel free to skip them, but they do provide an overview of how the IO system is implemented in the VM and other curiosities.
 
-## 12.4 Processes and group leaders
+## 12.4 プロセスとグループリーダー - Processes and group leaders
+
+`File.open/2`がPIDを含んだタプルを返すことを覚えているかもしれません:
 
 You may have noticed that `File.open/2` returned a tuple containing a PID:
 
@@ -112,6 +140,8 @@ You may have noticed that `File.open/2` returned a tuple containing a PID:
 iex> {:ok, file} = File.open "hello", [:write]
 {:ok, #PID<0.47.0>}
 ```
+
+これは入出力モジュールがプロセスの中で実際に動いているためです．`IO.write(pid, binary)`と書くと，入出力モジュールはメッセージをやりたい操作と共にプロセスへ送ります．自身のプロセスを使ってみたときに何が起こるかみてみましょう:
 
 That's because the IO module actually works with processes. When you say `IO.write(pid, binary)`, the IO module will send a message to the process with the desired operation. Let's see what happens if we use our own process:
 
@@ -125,7 +155,11 @@ iex> IO.write(pid, "hello")
 ** (ErlangError) erlang error: :terminated
 ```
 
+`IO.write/2`のあと，入出力モジュールへ表示したい内容が送られているのがわかります．次に，入出力モジュールが何か結果を期待した時点で失敗しています．なぜなら(入出力デバイスを)供給していないためです．
+
 After `IO.write/2`, we can see the request sent by the IO module printed, which then fails since the IO module expected some kind of result that we did not supply.
+
+[`StringIO`](/docs/stable/elixir/StringIO.html)モジュールは文字列で入出力デバイスのメッセージを実装したものを提供します:
 
 The [`StringIO`](/docs/stable/elixir/StringIO.html) module provides an implementation of the IO device messages on top of a string:
 
@@ -136,7 +170,11 @@ iex> IO.read(pid, 2)
 "he"
 ```
 
+入出力デバイスとプロセスをモデル化することで，Erlang VMは同じネットワークの異なるノード間でファイルプロセスを交換し，どちらのノードであってもファイルを読み書きできます．全ての入出力デバイスで，どのプロセスにも1つだけグループリーダーと呼ばれる特別なものがあります．
+
 By modelling IO devices with processes, the Erlang VM allows different nodes in the same network to exchange file processes to read/write files in between nodes. Of all IO devices, there is one that is special to each process, called group leader.
+
+`:stdio`と書いた場合，実際にはメッセージをグループリーダーへ送っています．グループリーダーはSTDIOファイルディスクリプタへと書きこみます:
 
 When you write to `:stdio`, you are actually sending a message to the group leader, which writes to STDIO file descriptor:
 
@@ -149,11 +187,17 @@ hello
 :ok
 ```
 
+グループリーダーはプロセス毎に設定でき，異なる状況で利用されます．例えばリモート端末でコードを実行する際，リモートノードで表示されたメッセージはリダイレクトされ，リクエストするきっかけになった端末で表示されることを保証します．
+
 The group leader can be configured per process and is used in different situations. For example, when executing code in a remote terminal, it guarantees messages in a remote node are redirected and printed in the terminal that triggered the request.
 
-## 12.5 `iodata` and `chardata`
+## 12.5 `iodata`と`chardata` - `iodata` and `chardata`
+
+上でみた全ての例ではファイルへの書き込みにバイナリ/文字列を利用していました．この章のタイトルは"Binaries, strings and char lists"です，以前に，文字列が単なるバイトである一方文字リストはコードポイントのリストであると言いました．
 
 In all examples above, we have used binaries/strings when writing to files. In the chapter "Binaries, strings and char lists", we mentioned how strings are simply bytes while char lists are lists with code points.
+
+`IO`と`File`の関数は引数としてリストも取れます．それだけではなく，数値とバイナリが混在したリストのリストも取れます:
 
 The functions in `IO` and `File` also allow lists to be given as arguments. Not only that, they also allow a mixed list of lists, integers and binaries to be given:
 
@@ -166,10 +210,18 @@ hello world
 :ok
 ```
 
+しかし，これには少し気をつけないといけません．リストは，IOデバイスのエンコーディングの依存を利用して，バイトのかたまり，あるいは文字のかたまりで表現されます．もしファイルがエンコーディングなしで開かれたら，ファイルはrawモードを期待しており，`IO`モジュールの関数は必ず`bin*`ではじまるものが使われます．それらの関数は引数として`iodata`を期待しています，つまりバイト及びバイナリからなるリストが渡されることを期待しているということです．
+
 However, this requires some attention. A list may represent either a bunch of bytes or a bunch of characters and which one to use depends on the encoding of the IO device. If the file is opened without encoding, the file is expected to be in raw mode, and the functions in the `IO` module starting with `bin*` must be used. Those functions expect an `iodata` as argument, i.e. it expects a list of integers representing bytes and binaries to be given.
+
+一方で`:stdio`と`:utf8`のエンコーディングを指定して開いたファイルは`IO`モジュールの残り(訳注`bin*`ではじまらない？)関数で動き，引数として`char_data`を期待します，つまり文字と文字列からなるリストが渡されることを期待しているということです．
 
 On the other hand, `:stdio` and files opened with `:utf8` encoding work with the remaining functions in the `IO` module and those expect a `char_data` as argument, i.e. they expect a list of characters or strings to be given.
 
+とはいえこれはちょっとした違いにすぎず．リストをそれらの関数へ渡そうと意図している場合にだけ詳しく検討すればよいです．バイナリは既にバイト表現されているので，常にrawで扱うことができます．
+
 Although this is a subtle difference, you only need to worry about those details if you intend to pass lists to those functions. Binaries are already represented by the underlying bytes and as such their representation is always raw.
+
+これで入出力デバイスと入出力に関連した機能をざっと見終わりました．[`IO`](/docs/stable/elixir/IO.html)，[`File`](/docs/stable/elixir/File.html)，[`Path`](/docs/stable/elixir/Path.html)と[`StringIO`](/docs/stable/elixir/StringIO.html)というElixirのモジュールについてや，どのようにVMが入出力の機構をうまく使うか，どのように入出力の操作に(charとioの)データを利用するかについて学びました．
 
 This finishes our tour on IO devices and IO related functionality. We have learned about four Elixir modules, [`IO`](/docs/stable/elixir/IO.html), [`File`](/docs/stable/elixir/File.html), [`Path`](/docs/stable/elixir/Path.html) and [`StringIO`](/docs/stable/elixir/StringIO.html), as well as how the VM uses processes for the underlying IO mechanisms and how to use (char and io) data for IO operations.
