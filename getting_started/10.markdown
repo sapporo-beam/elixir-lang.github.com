@@ -1,6 +1,6 @@
 ---
 layout: getting_started
-title: 10 Enumerables and Streams
+title: 10 enumerableとstream - Enumerables and Streams
 guide: 10
 ---
 
@@ -9,7 +9,9 @@ guide: 10
   <div class="toc"></div>
   <p></p>
 
-## 10.1 Enumerables
+## 10.1 enumerable - Enumerables
+
+Elixirはenumerable(列挙できる)という概念と，一緒に動かせる[`Enum`モジュール](/docs/stable/elixir/Enum.html)を用意しています．私たちは既に2つのenumerableを学びました: リストとマップです．
 
 Elixir provides the concept of enumerables and [the `Enum` module](/docs/stable/elixir/Enum.html) to work with them. We have already learned two enumerables: lists and maps.
 
@@ -20,7 +22,11 @@ iex> Enum.map(%{1 => 2, 3 => 4}, fn {k, v} -> k * v end)
 [2, 12]
 ```
 
+`Enum`モジュールはenumerableなアイテムを変形，並びかえ，グルーピング，フィルタリング，検索するための非常に多様な関数を提供しています．Elixirのコードの中で頻繁に利用するモジュールの一つです．
+
 The `Enum` module provides a huge range of functions to transform, sort, group, filter and retrieve items from enumerables. It is one of the modules developers use frequently in their Elixir code.
+
+Elixirは範囲も提供しています:
 
 Elixir also provides ranges:
 
@@ -31,11 +37,17 @@ iex> Enum.reduce(1..3, 0, &+/2)
 6
 ```
 
+ごらんの通りEnumモジュールは異なるデータ型でも動作するように考えられているので，そのAPIは様々なデータ型で使いやすいものだけになっています．あるデータ型固有の特徴的な操作はその固有のモジュールでやることになるでしょう．例えば，もしリストの特定の場所へ要素を挿入したい場合は，[`List`モジュール](/docs/stable/eliir/List.html)の関数`List.insert_at/3`を使うでしょう．たとえば範囲へ値を挿入するのはちょっと変な感じがしますもんね．
+
 Since the Enum module was designed to work across different data types, its API is limited to functions that are useful across many data types. For specific operations, you may need to reach to modules specific to the data types. For example, if you want to insert an element at a given position in a list, you should use the `List.insert_at/3` function from [the `List` module](/docs/stable/elixir/List.html), as it would make little sense to insert a value into, for example, a range.
+
+様々なデータ型で動作するので，私たちは`Enum`モジュールの関数はポリモーフィックであると言っています．とりわけ`Enum`モジュールにある関数は[`Enumerable`プロトコル](/docs/stable/elixir/Enumerable.html)を実装したどんなデータ型でも動作するようになっています．後ほどプロトコルについて話しましょう，今はstreamと呼ばれるenumerableの一種をみていくことにします．
 
 We say the functions in the `Enum` module are polymorphic because they can work with diverse data types. In particular, the functions in the `Enum` module can work with any data type that implements [the `Enumerable` protocol](/docs/stable/elixir/Enumerable.html). We are going to discuss Protocols in a later chapter, for now we are going to move on to a specific kind of enumerable called streams.
 
-## 10.2 Eager vs Lazy
+## 10.2 貪欲 vs 怠惰 - Eager vs Lazy
+
+`Enum`モジュールの関数は全て貪欲です．たくさんの関数は一つのenumerableをとって一つのリストを返します:
 
 All the functions in the `Enum` module are eager. Many functions expect an enumerable and return a list back:
 
@@ -46,6 +58,8 @@ iex> Enum.filter(1..3, odd?)
 [1, 3]
 ```
 
+つまり`Enum`で複数の操作をしたとき，結果が出るまで全ての操作が中間リストを作るということになります:
+
 This means that when performing multiple operations with `Enum`, each operation is going to generate an intermediate list until we reach the result:
 
 ```iex
@@ -53,7 +67,11 @@ iex> 1..100_000 |> Enum.map(&(&1 * 3)) |> Enum.filter(odd?) |> Enum.sum
 7500000000
 ```
 
+上の例は操作をパイプラインでつなげています．まず範囲からはじまり，範囲の全ての要素を3倍します．最初の操作で`100_000`個の要素のリストができます．次にリストの中の全ての奇数を残すと，`50_000`個の要素をもった新しいリストができ，それから全ての要素を足し合わせます．
+
 The example above has a pipeline of operations. We start with a range and then multiply each element in the range by 3. This first operation will now create and return a list with `100_000` items. Then we keep all odd elements from the list, generating a new list, now with `50_000` items, and then we sum all entries.
+
+Elixirではかわりに，遅延操作できる[`Stream`モジュール](/docs/stable/elixir/Stream.html)を用意しています．
 
 As an alternative, Elixir provides [the `Stream` module](/docs/stable/elixir/Stream.html) which supports lazy operations:
 
@@ -62,11 +80,17 @@ iex> 1..100_000 |> Stream.map(&(&1 * 3)) |> Stream.filter(odd?) |> Enum.sum
 7500000000
 ```
 
+中間リストを生成するかわりに，streamは`Enum`モジュールへ値を渡したときだけ実行される一連の処理を作ります．streamは大きかったり*無限かもしれない*集まりを扱うのに便利です．
+
 Instead of generating intermediate lists, streams create a series of computations that are invoked only when we pass it to the `Enum` module. Streams are useful when working with large, *possibly infinite*, collections.
 
-## 10.3 Streams
+## 10.3 stream - Streams
+
+streamはlazyで，composableなenumerableです．
 
 Streams are lazy, composable enumerables.
+
+上の例で観たように`1..100_000 |> Stream.map(&(&1 * 3))`は`1..100_000`の範囲に対して`map`を処理する表現であるstreamというデータ型を返すので，lazyです．
 
 They are lazy because, as shown in the example above, `1..100_000 |> Stream.map(&(&1 * 3))` returns a data type, an actual stream, that represents the `map` computation over the range `1..100_000`:
 
@@ -75,12 +99,16 @@ iex> 1..100_000 |> Stream.map(&(&1 * 3))
 #Stream<1..100_000, funs: [#Function<34.16982430/1 in Stream.map/2>]>
 ```
 
+さらに，複数のstream処理を通せるため，composableです．
+
 Furthermore, they are composable because we can pipe many stream operations:
 
 ```iex
 iex> 1..100_000 |> Stream.map(&(&1 * 3)) |> Stream.filter(odd?)
 #Stream<1..100_000, funs: [...]>
 ```
+
+`Stream`モジュールは引数へ全てのenumerableでも受けつけ，結果としてStreamを返します．無限になるかもしれないstreamを作る関数も用意しています．例えば`Stream.cycle/1`は与えられたenumerableを無限に繰り返すstreamを作るのに使われます．永遠に繰り返すことになるので，こういったstreamから`Enum.map/2`のような関数を呼び出すことのないように気をつけてください:
 
 Many functions in the `Stream` module accept any enumerable as argument and return a stream as result. It also provides functions for creating streams, possibly infinite. For example, `Stream.cycle/1` can be used to create a stream that cycles a given enumerable infinitely. Be careful to not call a function like `Enum.map/2` on such streams, as they would cycle forever:
 
@@ -91,6 +119,8 @@ iex> Enum.take(stream, 10)
 [1, 2, 3, 1, 2, 3, 1, 2, 3, 1]
 ```
 
+一方`Stream.unfold/2`は与えられた初期値から値を生成するのに使われます:
+
 On the other hand, `Stream.unfold/2` can be used to generate values from a given initial value:
 
 ```iex
@@ -100,6 +130,8 @@ iex> Enum.take(stream, 3)
 ["h", "e", "ł"]
 ```
 
+その他の興味深い関数としてリソースを包むために使える`Stream.resource/3`があります．これはどこか途中で失敗したとしてもenumerationする前には正しく開かれ，終わったら閉じられることを保証します．例えば，私たちはファイルをstreamで扱うことができます:
+
 Another interesting function is `Stream.resource/3` which can be used to wrap around resources, guaranteeing they are opened right before enumeration and closed afterwards, even in case of failures. For example, we can use it to stream a file:
 
 ```iex
@@ -108,8 +140,14 @@ iex> stream = File.stream!("path/to/file")
 iex> Enum.take(stream, 10)
 ```
 
+上の例はあなたが選んだファイルの最初の10行を取得します．このようにstreamは大きいファイルやネットワークのような遅いリソースを扱うのにとても使いやすいです．
+
 The example above will fetch the first 10 lines of the file you have selected. This means streams can be very useful for handling large files or even slow resources like network resources.
 
+最初は[`Enum`](/docs/stable/elixir/Enum.html)や[`Stream`](/docs/stable/elixir/Stream.html)モジュールの関数や機能たちについて身構えてしまうでしょうが，回数を重ねるにつれだんだんと慣れていくでしょう．特に最初は`Enum`モジュールに集中して，遅いリソースや大きな（もしかしたら無限の）コレクションを扱うために遅延が必要であるものだけ`Stream`にしていくことになるでしょう．
+
 The amount of functions and functionality in [`Enum`](/docs/stable/elixir/Enum.html) and [`Stream`](/docs/stable/elixir/Stream.html) modules can be daunting at first but you will get familiar with them case by case. In particular, focus on the `Enum` module first and only move to `Stream` for the particular scenarios where laziness is required to either deal with slow resources or large, possibly infinite, collections.
+
+次はElixirの中心的な特徴である，並行，並列，分散処理を簡単にわかりやすく簡単に書けるようにしてくれる，プロセスについて見ることにします．
 
 Next we'll look at a feature central to Elixir, Processes, which allows us to write concurrent, parallel and distributed programs in an easy and understandable way.
