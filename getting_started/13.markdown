@@ -1,6 +1,6 @@
 ---
 layout: getting_started
-title: 13 alias, require and import
+title: 13 alias，requireとimpot - alias, require and import
 guide: 13
 ---
 
@@ -8,9 +8,13 @@ guide: 13
 
   <div class="toc"></div>
 
+ソフトウェアの再利用を行いやすくするために，Elixirは3つのディレクティブを用意しています．これから見ていくように，*レキシカルスコープ*を持っているのでディレクティブと呼ばれています．
+
 In order to facilitate software reuse, Elixir provides three directives. As we are going to see below, they are called directives because they have **lexical scope**.
 
-## 13.1 alias
+## 13.1 alias - alias
+
+`alias`によって，与えられたモジュールの名前へ別名をつけることができます．`Math`モジュールが数学に特化した操作のため，特別なリストの実装を使うことを想像してみてください:
 
 `alias` allows you to set up aliases for any given module name. Imagine our `Math` module uses a special list implementation for doing math specific operations:
 
@@ -20,6 +24,8 @@ defmodule Math do
 end
 ```
 
+ここから，どんな`List`の参照でも自動的に`Math.List`へと展開されます．オリジナルの`List`へアクセスしたい場合，`Elixir`からモジュールへとアクセスできます．
+
 From now on, any reference to `List` will automatically expand to `Math.List`. In case one wants to access the original `List`, it can be done by accessing the module via `Elixir`:
 
 ```elixir
@@ -28,7 +34,11 @@ Elixir.List.flatten      #=> uses List.flatten
 Elixir.Math.List.flatten #=> uses Math.List.flatten
 ```
 
+> メモ: Elixirの中で定義されている全てのモジュールはElixir名前空間の中に定義されています．しかし，利便性のため，参照するときには"Elixir."を省略することができます．
+
 > Note: All modules defined in Elixir are defined inside a main Elixir namespace. However, for convenience, you can omit "Elixir." when referencing them.
+
+Aliasはショートカットを定義するのに良く使われます．実際，`as`オプションをつけないで`alias`を呼ぶと，モジュール名の最後の部分を自動的に設定します．例えば:
 
 Aliases are frequently used to define shortcuts. In fact, calling `alias` without an `as` option sets the alias automatically to the last part of the module name, for example:
 
@@ -36,11 +46,15 @@ Aliases are frequently used to define shortcuts. In fact, calling `alias` withou
 alias Math.List
 ```
 
+は以下と同じです:
+
 Is the same as:
 
 ```elixir
 alias Math.List, as: List
 ```
+
+`alias`は**lexically scoped**であることに注意してください，特定の関数の中で別名をセットすることもできます:
 
 Note that `alias` is **lexically scoped**, which allows you to set aliases inside specific functions:
 
@@ -57,11 +71,17 @@ defmodule Math do
 end
 ```
 
+上の例のように，`alias`を関数`plus/2`の中で呼び出しても，別名は関数`plus/2`の内部でのみ有効で，`minus/2`へは全く影響しません．
+
 In the example above, since we are invoking `alias` inside the function `plus/2`, the alias will just be valid inside the function `plus/2`. `minus/2` won't be affected at all.
 
-## 13.2 require
+## 13.2 require - require
+
+Elixirはメタプログラミング(コードを生成するコードを書く)のためのメカニズムとしてマクロを用意しています．
 
 Elixir provides macros as a mechanism for meta-programming (writing code that generates code).
+
+マクロとはコンパイル時に実行して展開されるコード片のことです．つまり，マクロを使うために，コンパイル時にそのモジュールと実装が用意されている保証が必要になります．`require`ディレクティブを使うとそのようにできます:
 
 Macros are chunks of code that are executed and expanded at compilation time. This means, in order to use a macro, we need to guarantee its module and implementation are available during compilation. This is done with the `require` directive:
 
@@ -74,11 +94,17 @@ iex> Integer.odd?(3)
 true
 ```
 
+Elixirでは`Integer.odd?/1`はマクロとして定義されているのでガードとして利用できます．つまり`Integer.odd?/1`を実行するためには，まず`Integer`モジュールが必要です．
+
 In Elixir, `Integer.odd?/1` is defined as a macro so it can be used as guards. This means that, in order to invoke `Integer.odd?/1`, we need to first require the `Integer` module.
+
+一般的に，そのモジュールにあるマクロを使おうとする場合以外では，利用前にモジュールが必要とされることはありません，ロードされていないマクロを呼び出そうとした場合はエラーになります．`alias`ディレクティブと同じように，`require`もレキシカルスコープであることに着目してください．マクロについては後の章でまた詳しく話します．
 
 In general a module does not need to be required before usage, except if we want to use the macros available in that module. An attempt to call a macro that was not loaded will raise an error. Note that like the `alias` directive, `require` is also lexically scoped. We will talk more about macros in a later chapter.
 
-## 13.3 import
+## 13.3 import - import
+
+他のモジュールの関数かマクロへ修飾名をつけず簡単にアクセスしたいときに`import`を使います．例えば`List`の`duplicate`関数を何回も使いたい場合，単にインポートできます:
 
 We use `import` whenever we want to easily access functions or macros from other modules without using the qualified name. For instance, if we want to use the `duplicate` function from `List` several times, we can simply import it:
 
@@ -89,7 +115,11 @@ iex> duplicate :ok, 3
 [:ok, :ok, :ok]
 ```
 
+このケースでは，`List`から関数`duplicate`(引数が2のもの)だけをインポートしています．`only:`は省略可能ですが，つけることが推奨されています．`except`もオプションとして与えることができます．
+
 In this case, we are importing only the function `duplicate` (with arity 2) from `List`. Although `only:` is optional, its usage is recommended. `except` could also be given as an option.
+
+`import`では`:only`へ`:macros`と`:functions`を渡すこともできます．例えば全てのマクロをインポートしたい場合はこのように書けます:
 
 `import` also supports `:macros` and `:functions` to be given to `:only`. For example, to import all macros, one could write:
 
@@ -97,11 +127,15 @@ In this case, we are importing only the function `duplicate` (with arity 2) from
 import Integer, only: :macros
 ```
 
+あるいは全ての関数をインポートしてい場合はこのように書けます:
+
 Or to import all functions, you could write:
 
 ```elixir
 import Integer, only: :functions
 ```
+
+`import`もまた**lexically scoped**であることに注意してください，これは特定の関数の中で特定のマクロをインポートできることを意味しています．
 
 Note that `import` is also **lexically scoped**, this means we can import specific macros inside specific functions:
 
@@ -114,13 +148,21 @@ defmodule Math do
 end
 ```
 
+上の例ではインポートされた`List.duplicate/2`は特定の関数内からしか見えません．`duplicate/2`はそのモジュールの他のどの関数からも(もちろん他のモジュールからも)使えません．
+
 In the example above, the imported `List.duplicate/2` is only visible within that specific function. `duplicate/2` won't be available in any other function in that module (or any other module for that matter).
+
+モジュールをimportすると自動的にrequireすることに注意してください．
 
 Note that importing a module automatically requires it.
 
-## 13.4 Aliases
+## 13.4 Alias - Aliases
+
+ここでもしかしたらElixirのエイリアスとは実際には何で，どのように表現されているのか？ということが気になってきたかもしれません．
 
 At this point, you may be wondering, what exactly an Elixir alias is and how it is represented?
+
+Elixirのエイリアスは(`String`，`Keyword`などのような)大文字始まりの識別子でコンパイル時にatomへと変換されます．例えば`String`エイリアスはデフォルトではatom`:"Elixir.String"`へと変換されます:
 
 An alias in Elixir is a capitalized identifier (like `String`, `Keyword`, etc) which is converted to an atom during compilation. For instance, the `String` alias translates by default to the atom `:"Elixir.String"`:
 
@@ -133,7 +175,11 @@ iex> :"Elixir.String"
 String
 ```
 
+`alias/2`ディレクティブを使うことで，単にエイリアスを何へと変換するかだけを変えています．
+
 By using the `alias/2` directive, we are simply changing what an alias translates to.
+
+詳しく書くと，Erlang VMの中では(つまりElixirでも)モジュールがatomで表現されているのでエイリアスがうまく動きます．例えばErlangのモジュールを使うときのメカニズムはこうです:
 
 Aliases work as described because in the Erlang VM (and consequently Elixir), modules are represented by atoms. For example, that's the mechanism we use to call Erlang modules:
 
@@ -141,6 +187,8 @@ Aliases work as described because in the Erlang VM (and consequently Elixir), mo
 iex> :lists.flatten([1,[2],3])
 [1, 2, 3]
 ```
+
+これがモジュールの内部で与えられた関数を動的に呼び出すことができるメカニズムです:
 
 This is also the mechanism that allows us to dynamically call a given function in a module:
 
@@ -151,9 +199,13 @@ iex> mod.flatten([1,[2],3])
 [1,2,3]
 ```
 
+言いかえると，`:lists`というアトムにある関数`flatten`を単に呼び出しているだけです．
+
 In other words, we are simply calling the function `flatten` on the atom `:lists`.
 
-## 13.5 Nesting
+## 13.5 ネスト - Nesting
+
+ここでエイリアスについて話してきました，Elixirでのネストがどのように動作するかについても話しましょう．以下の例で考えてみます:
 
 Now that we have talked about aliases, we can talk about nesting and how it works in Elixir. Consider the following example:
 
@@ -164,7 +216,11 @@ defmodule Foo do
 end
 ```
 
+この例は`Foo`と`Foo.Bar`という2つのモジュールを定義しています． 後者，`Foo`の中の`Bar`は(`Foo`と)同じレキシカルスコープの中にいます．もし開発者が後で`Bar`を他のファイルへと移動したら，参照するためには，フルネーム(`Foo.Bar`)か上で話していたような`alias`デイレクティブを使ってセットすることが必要になります．
+
 The example above will define two modules `Foo` and `Foo.Bar`. The second can be accessed as `Bar` inside `Foo` as long as they are in the same lexical scope. If later the developer decides to move `Bar` to another file, it will need to be referenced by its full name (`Foo.Bar`) or an alias needs to be set using the `alias` directive discussed above.
+
+言いかえると上のコードは以下と同じです:
 
 In other words, the code above is exactly the same as:
 
@@ -175,5 +231,7 @@ defmodule Elixir.Foo do
   alias Elixir.Foo.Bar, as: Bar
 end
 ```
+
+後の章で見るように，エイリアスはマクロにおいてのとても重要な役割，健全性の保証を担います．Elixirのモジュールについてはほとんど見て回りました．最後にモジュールの属性について見ていきましょう．
 
 As we will see in later chapters, aliases also play a crucial role in macros, to guarantee they are hygienic. With this we are almost finishing our tour about Elixir modules, the last topic to cover is module attributes.
