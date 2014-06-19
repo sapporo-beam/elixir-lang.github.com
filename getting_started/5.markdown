@@ -29,7 +29,7 @@ iex> case {1, 2, 3} do
 ...> end
 ```
 
-もし既にある値とパターーンマッチさせたい場合，`^`を使わなければなりません:
+もし既にある値とパターンマッチさせたい場合，`^`を使わなければなりません:
 
 If you want to pattern match against an existing variable, you need to use the `^` operator:
 
