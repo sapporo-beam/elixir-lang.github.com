@@ -1,6 +1,6 @@
 ---
 layout: getting_started
-title: 17 try, catch and rescue
+title: 17 トライ，キャッチとレスキュー - try, catch and rescue
 guide: 17
 ---
 
@@ -8,9 +8,13 @@ guide: 17
 
   <div class="toc"></div>
 
+エリクサーは3つのエラー機構を持っています: エラー，スローそしてイグジットです．この章ではそれらについて，それぞれどんな時に使われるとよいかも含めて詳しくみていきましょう．
+
 Elixir has three error mechanisms: errors, throws and exits. In this chapter we will explore each of them and include remarks about when each should be used.
 
-## 17.1 Errors
+## 17.1 エラー - Errors
+
+アトムへ数を足そうとすると，エラーの例を見ることができます．
 
 A sample error can be retrieved by trying to add a number into an atom:
 
@@ -20,6 +24,8 @@ iex> :foo + 1
      :erlang.+(:foo, 1)
 ```
 
+ランタイムエラーは`raise/1`マクロを使うことでいつでも起こすことができます:
+
 A runtime error can be raised any time by using the `raise/1` macro:
 
 ```iex
@@ -27,12 +33,16 @@ iex> raise "oops"
 ** (RuntimeError) oops
 ```
 
+他のエラーは`raise/2`にエラーの名前とキーワード引数のリストを渡すことで起こすことができます:
+
 Other errors can be raised with `raise/2` passing the error name and a list of keyword arguments:
 
 ```iex
 iex> raise ArgumentError, message: "invalid argument foo"
 ** (ArgumentError) invalid argument foo
 ```
+
+`defexception/2`マクロを使うことで自分でエラーを定義することもできます．よくあるケースでは例外を定義するときメッセージも入力できるようにします:
 
 You can also define your own errors using the `defexception/2` macro. The most common case is to define an exception with a message field:
 
@@ -43,6 +53,8 @@ iex> raise MyError
 iex> raise MyError, message: "custom message"
 ** (MyError) custom message
 ```
+
+例外は`try/rescue`構造で拾うことができます:
 
 Exceptions can be rescued by using the `try/rescue` construct:
 
@@ -55,6 +67,8 @@ iex> try do
 RuntimeError[message: "oops"]
 ```
 
+上の例ではランタイムエラーを拾い，`iex`セッションでエラーが表示されるようにエラー自身を返しています．しかし実際のところElixirを使っている開発者が`try/rescue`構造を使うことはほとんどないでしょう．例えば，多くの言語ではファイルを開けなかったときにエラーになるので，あなたがそれを拾わなければならないようになっています．一方Elixirでの関数`File.read/1`は，ファイルを開くのに成功した/失敗した情報を含んだタプルを返すようになっています:
+
 The example above rescues the runtime error and returns the error itself which is then printed in the `iex` session. In practice Elixir developers rarely use the `try/rescue` construct though. For example, many languages would force you to rescue an error when a file cannot open successfully. Elixir instead provides a `File.read/1` function which returns a tuple containing information if the file was opened with success or not:
 
 ```iex
@@ -66,6 +80,8 @@ iex> File.read "hello"
 {:ok, "world"}
 ````
 
+ここには`try/rescue`が出てきません．ファイルを開くときにおこる複数の結果に対応したいときは，`case`を使ってパターンマッチングするだけです:
+
 There is no `try/rescue` here. In case you want to handle multiple outcomes of opening a file, you can simply use pattern matching with `case`:
 
 ```iex
@@ -75,7 +91,11 @@ iex> case File.read "hello" do
 ...> end
 ```
 
+最終的に，ファイルを開いたときに例外にするかどうかはあなたのアプリケーションでどうするか決めることになります．なぜならElixirでは`File.read/1`や他の多くの関数が例外を押しつけてこないからです．どうすれば一番よくなるかは開発者へお任せしています．
+
 At the end of the day, it is up to your application to decide if an error while opening a file is exceptional or not. That's why Elixir doesn't impose exceptions on `File.read/1` and many other functions. Instead we leave it up to the developer to choose the best way to proceed.
+
+ファイルがあることを期待している(そしてファイルがないと本当の意味でのエラー)の場合は単に`File.read!/1`を使えます:
 
 For the cases where you do expect a file to exist (and the lack of a file is truly an error) you can simply use `File.read!/1`:
 
@@ -85,11 +105,17 @@ iex> File.read! "unknown"
     (elixir) lib/file.ex:305: File.read!/1
 ```
 
+言い変えると，`try/rescue`の利用を避けるのは*フロー制御のためにエラーを利用しない*ためです．Elixirでは，エラーを期待していない，あるいは例外的な状況のために用意しています．フロー制御構造が必要な場合，スローが使われなければなりません．次にそれを見ていきましょう．
+
 In other words, we avoid using `try/rescue` because **we don't use errors for control flow**. In Elixir, we take errors literally: they are reserved to unexpected and/or exceptional situations. In case you actually need flow control constructs, throws must be used. That's what we are going to see next.
 
-## 17.2 Throws
+## 17.2 スロー - Throws
+
+Elixirでは後で捕れるように値を投げることができます．`throw`と`catch`がないと値が取れないような状況のために`throw`と`catch`という言葉は予約されています．
 
 In Elixir, one can throw a value to be caught later. `throw` and `catch` are reserved for situations where it is not possible to retrieve a value unless by using `throw` and `catch`.
+
+ライブラリでふさわしいAPIが提供されていないないような場合はあまりありません．例えば`Enum`モジュールで，13の倍数となるような最初の数を見つけたいときに適切なAPIが用意されていない場合を考えてみましょう:
 
 Those situations are quite uncommon in practice unless when interfacing with a library that does not provide the proper APIs. For example, let's imagine the `Enum` module did not provide any API for finding a value and we need to find the first number that is a multiple of 13:
 
@@ -105,6 +131,8 @@ iex> try do
 "Got -39"
 ```
 
+しかしながら実際には`Enum.find/2`を使った方がシンプルです:
+
 However, in practice one can simply use `Enum.find/2`:
 
 ```iex
@@ -112,7 +140,9 @@ iex> Enum.find -50..50, &(rem(&1, 13) == 0)
 -39
 ```
 
-## 17.3 Exits
+## 17.3 イグジット - Exits
+
+全てのElixirコードは複数のプロセスの中で動いていて，お互いにやりとりしています．プロセスが死んだとき，`exit`という信号を送ります．プロセスは明示的にイグジット信号を送ることで死ぬことができます:
 
 Every Elixir code runs inside processes that communicates with each other. When a process dies, it sends an `exit` signal. A process can also die by explicitly sending an exit signal:
 
@@ -122,7 +152,11 @@ iex> spawn_link fn -> exit(1) end
 ** (EXIT from #PID<0.56.0>) 1
 ```
 
+上の例では，リンクしていたプロセスは`exit`信号と1という値を送って死にました．Elixirのシェルはそのメッセージを自動的に受けとって端末に表示しています．
+
 In the example above, the linked process died by sending an `exit` signal with value of 1. The Elixir shell automatically handles those messages and prints them to the terminal.
+
+`exit`は`try/catch`を使うことで"キャッチされ"ます:
 
 `exit` can also be "caught" using `try/catch`:
 
@@ -135,13 +169,21 @@ iex> try do
 "not really"
 ```
 
+`try/catch`を使うことが既に珍しいですが，イグジットをキャッチするのはもっと珍しいことです．
+
 Using `try/catch` is already uncommon and using it to catch exits is even more rare.
+
+`exit`シグナルはErlang VMで提供されている耐障害性において重要な部分を担っています．プロセスは通常，単にプロセスの`exit`信号を待つだけの監視プロセスを備えた監視ツリーにくみこまれて動作しています．監視プロセスがイグジット信号を受けとると，監視作戦が開始され，監視対象のプロセスは再起動させられます．
 
 `exit` signals are an important part of the fault tolerant system provided by the Erlang VM. Processes usually run under supervision trees which are themselves processes that just wait for `exit` signals of the supervised processes. Once an exit signal is received, the supervision strategy kicks in and the supervised process is restarted.
 
+監視システムの構造自体が`try/catch`や`try/rescue`に似ているため，Elixirではそれらの構文があまり用いられていないのです．確実にエラーを拾うかわりに，エラーのあとに"早く失敗する"ことで監視ツリーがアプリケーションを既知の初期状態へと戻すことを保証しています．
+
 It is exactly this supervision system that makes constructs like `try/catch` and `try/rescue` so uncommon in Elixir. Instead of rescuing a certain error, we'd rather "fail fast" since the supervision tree will guarantee our application will go back to a known initial state after the error.
 
-## 17.4 After
+## 17.4 アフター - After
+
+特定の動作をした後，リソースをきれいに片付けられることを保証しなければならないことがあり，そういった場合に`try/after`が利用されます．例えばファイルを開くとき，必ず閉じることを`try/after`で保証できます:
 
 Sometimes it is necessary to use `try/after` to guarantee a resource is cleaned up after some particular action. For example, we can open a file and guarantee it is closed with `try/after` block:
 
@@ -156,7 +198,9 @@ iex> try do
 ** (RuntimeError) oops, something went wrong
 ```
 
-## 17.5 Variables scope
+## 17.5 変数のスコープ - Variables scope
+
+`try/catch/rescue/after`ブロックの中で定義した変数は外では見えないことを心に留めておいてください．大事なことです．これは`try`ブロックが失敗するかもしれず，そのとき変数が最初の場所で絶対に束縛されないことがありうるためです．言い変えると，このコードは無効です:
 
 It is important to bear in mind that variables defined inside `try/catch/rescue/after` blocks do not leak to the outer context. This is because the `try` block may fail and as such the variables may never be bound in the first place. In other words, this code is invalid:
 
@@ -172,6 +216,10 @@ iex> from_after
 ** (RuntimeError) undefined function: from_after/0
 ```
 
+`try`，`catch`そして`rescue`の導入はこれで終わりです．他の言語での利用頻度よりは低いですが，目的があって"規則にのっとった"コードにならないようなライブラリや状況で便利に使えることがあるかもしれません．
+
 This finishes our introduction to `try`, `catch` and `rescue`. You will find they are used less frequently in Elixir than in other languages although they may be handy in some situations where a library or some particular code is not playing "by the rules".
+
+次はElixirを構成している内包表記やシギルといったものについて話しましょう．
 
 It is time to talk about some Elixir constructs like comprehensions and sigils.
