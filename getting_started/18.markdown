@@ -1,6 +1,6 @@
 ---
 layout: getting_started
-title: 18 Comprehensions
+title: 18 内包表記 - Comprehensions
 guide: 18
 ---
 
@@ -8,7 +8,11 @@ guide: 18
 
   <div class="toc"></div>
 
+Elixirでは，列挙を繰り返すこと，結果をフィルタリングすること，そして別の値のリストへとマッピングすることをよく行います．内包表記はそうした構造の構文糖衣となっており，`for`というスペシャルフォームでそれらの一般的なタスクをまとめています．
+
 In Elixir, it is common to loop over Enumerables, often filtering some results, and mapping to another list of values. Comprehensions are syntax sugar for such constructs, grouping those common tasks into the `for` special form.
+
+例えば，以下のようにリストの要素の2乗を求めることができます:
 
 For example, we can get all the square values of elements in a list as follows:
 
@@ -17,9 +21,13 @@ iex> for n <- [1, 2, 3, 4], do: n * n
 [1, 4, 9, 16]
 ```
 
+リスト内包表記は3つの部品，生成器，フィルタ，収集品からできています．
+
 A comprehension is made of three parts: generators, filters and collectables.
 
-## 18.1 Generators and filters
+## 18.1 生成器とフィルタ - Generators and filters
+
+上の式での`n <- [1, 2, 3, 4]`が生成器です．これは文字通りリスト内包表記で使われる値を生成します．列挙可能なものなら何でも生成器の右側の式へ渡せます:
 
 In the expression above, `n <- [1, 2, 3, 4]` is the generator. It is literally generating values to be used in the comprehensions. Any enumerable can be passed in the right-hand side the generator expression:
 
@@ -27,6 +35,8 @@ In the expression above, `n <- [1, 2, 3, 4]` is the generator. It is literally g
 iex> for n <- 1..4, do: n * n
 [1, 4, 9, 16]
 ```
+
+生成器はパターンマッチングにも対応しており，マッチしなかった全てのパターンを無視します．範囲のかわりに，キーがアトムで`:good`か`:bad`となっているキーワードリストを持っていて，goodとなっているものの値だけを二乗したい場合を考えてみましょう:
 
 Generator expressions also support pattern matching, ignoring all non-matching patterns. Imagine that instead of a range, we have a keyword list where the key is the atom `:good` or `:bad` and we only want to calculate the square of the good values:
 
@@ -36,6 +46,8 @@ iex> for {:good, n} <- values, do: n * n
 [1, 4, 16]
 ```
 
+代わりに，幾つか目的にあった要素だけを通すのにフィルターを利用することもできます．例えば奇数の二乗だけを入手できます:
+
 Alternatively, filters can be used to filter some particular elements out. For example, we can get the square of only odd numbers:
 
 ```iex
@@ -44,7 +56,11 @@ iex> for n <- 1..4, Integer.odd?(n), do: n * n
 [1, 9]
 ```
 
+フィルターは`nil`か`false`以外の全ての値を通します．
+
 A filter will keep all values except `nil` or `false`.
+
+一般的に内包表記は`Enum`や`Stream`モジュールにある同じ効果を持つ関数を使うより簡潔な表現を提供します．そのうえ，内包表記には複数の生成器とフィルターを与えることができます．ディレクトリのリストを受けとって，それらのディレクトリにある全てのファイルを削除する例がこちらです:
 
 Comprehensions in general provide a much more concise representation than using the equivalent functions from the `Enum` and `Stream` modules. Furthermore, comprehensions also allow multiple generators and filters to be given. Here is an example that receives a list of directories and deletes all files in those directories:
 
@@ -57,9 +73,13 @@ for dir  <- dirs,
 end
 ```
 
+リスト内包表記の中の変数割り当てについて覚えておいてください．生成器，フィルター，あるいはブロックの内にあるものはリスト内包表記の外側には影響を及ぼしません．
+
 Keep in mind that variable assignments inside the comprehension, be it in generators, filters or inside the block, are not reflected outside of the comprehension.
 
-## 18.2 Bitstring generators
+## 18.2 Bitstring生成器 - Bitstring generators
+
+Bitstring生成器も使えます．bitstringのstreamを用意したいときにとても便利です．以下はそれぞれ赤，緑，青の値を表すピクセルのリストをバイナリで受け取ってタプルへと変換する例です:
 
 Bitstring generators are also supported and are very useful when you need to organize bitstring streams. The example below receives a list of pixels from a binary with their respective red, green and blue values and convert them into triplets:
 
@@ -69,11 +89,17 @@ iex> for <<r::8, g::8, b::8 <- pixels>>, do: {r, g, b}
 [{213,45,132},{64,76,32},{76,0,0},{234,32,15}]
 ```
 
+Bitstring生成器は"普通の"enumerable生成器と混ぜられ，フィルタもうまく動きます．
+
 A bitstring generator can be mixed with the "regular" enumerable generators and provide filters as well.
 
-## 18.3 Into
+## 18.3 Into - Into
+
+上の例のように，内包表記は結果としてリストを返します．
 
 In the examples above, the comprehension returned a list as a result.
+
+しかし，`:into`オプションを渡すことで，内包表記の結果を異なるデータ型へと挿入することができます．例えば，全ての空白を簡単に削除するのにbitstring生成器と`:into`オプションを使うことができます:
 
 However, the result of a comprehension can be inserted into different data structures by passing the `:into` option. For example, we can use bitstring generators with the `:into` option to easily remove all spaces in a string:
 
@@ -82,7 +108,11 @@ iex> for <<c <- " hello world ">>, c != ?\s, into: "", do: <<c>>
 "helloworld"
 ```
 
+セット，マップそして他のディクショナリも`:into`オプションに渡せます．たいていの場合，`:into`は`Collectable`プロトコルを実装してさえいればどんなものでも受けつけます．
+
 Sets, maps and other dictionaries can also be given with the `:into` option. In general, the `:into` accepts any structure as long as it implements the `Collectable` protocol.
+
+例えば`IO`モジュールはストリームを提供します．ストリームは`Enumerable`でかつ`Collectable`です．内包表記を使って何でもタイプしたものを大文字にして返すエコー端末を実装することができます:
 
 For example, the `IO` module provides streams, that are both `Enumerable` and `Collectable`. You can implement an echo terminal that returns whatever is typed, but in upcase, using comprehensions:
 
@@ -92,5 +122,7 @@ iex> for line <- stream, into: stream do
 ...>   String.upcase(line) <> "\n"
 ...> end
 ```
+
+ターミナルに何か文字を打つと同じ値が大文字になって表示されるのを見られるでしょう．不幸なことにこの例はシェルを内包表記にとじこめてしまいます，そこから出るには`Ctrl+C`を二回押さなければなりません．:)
 
 Now type any string into the terminal and you will see the same value will be printed in upcase. Unfortunately, this example also got your shell stuck in the comprehension, so you will need to hit `Ctrl+C` twice to get out of it. :)
